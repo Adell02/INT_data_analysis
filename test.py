@@ -30,7 +30,7 @@ columna = hojas23_df.pop(columna_a_moure) #s'extrau la columna i la guardem en '
 hojas23_df.insert(posicio_nova, columna_a_moure,columna)
 
 #ordenem segons Vehicle i Id amb aquesta prioritat (Vehicle > ID)
-hojas23_df = hojas23_df.sort_values(by=['Vehicle','Id'])
+hojas23_df = hojas23_df.sort_values(by=['Vehicle','Id','Timestamp'])
 
 
 #generem l'arxiu
