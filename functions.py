@@ -3,10 +3,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
+import statsmodels.api as sm
 import os
-
-# A partir de aquí, las funciones están mas optimizadas y permiten usarlas para multiples
-# variables o una de sola, si se desea.
 
 def multi_histogram(dataframe,elements,units='',start=-200,end=200,step=10, title='Unnamed distribution'):
     
@@ -60,9 +58,6 @@ def generate_go_pie(dataframe,elements,title='Unnamed pie chart'):
     # OUTPUTS
     #   - go.Pie element 
     
-    # Get the number of elements to be displayed
-    num_elements = len(elements)
-
     # For each element (column), add all its values and save it into a data vector
     total_value=[]
 
@@ -112,5 +107,261 @@ def pie_chart(dataframe,elements,title='Unnamed pie chart'):
     fig.update_traces(hole=.4, hoverinfo="label+percent+name")
 
     fig.update_layout(title_text=title)
+    
+    return fig
+
+"""
+def test_scatter_plot_user(dataframe,key_user,elements,title='Unnamed scatter plot',reg_line = False):
+    
+    if len(elements) != 2:
+        return None
+
+    # De dataframe, cogemos sólo la información disponible del usuario que nos han pasado
+    # From dataframe, we store in an auxiliary dataframe only the information corresponding to
+    # the key_user. It will search for it in key_columns
+    if key_user in dataframe.index:
+        user_df = dataframe.loc[dataframe.index == key_user]
+    else:
+        return None
+    
+    # Check if we want a regression line
+    if reg_line == True:
+        trend='ols'
+    else:
+        trend = False
+    
+    # Plot generation
+    fig = px.scatter(
+        user_df,
+        x=elements[0],
+        y=elements[1],
+        opacity=0.65,
+        trendline=trend,
+        trendline_color_override='darkblue'
+    )
+
+
+    return fig
+"""
+
+def trace_trendline(dataframe,element_x,elements_y,title='Trendline'):
+
+    # This function generates a trendline (performing OLS) given a element to display on the
+    # x_axis and allows multiple elements for the y_axis (thus, multiple trendlines)
+    # 
+    # INPUT:
+    #   - dataframe: containing all data
+    #   - element_x: which element will be display on the x_axis
+    #   - elements_y: elements, trendline of which, will be displayed on the y_axis
+    # OUTPUT:
+    #   - trandline_vector: contains all traces to be added in a figure
+
+
+    trendline_vector=[]
+    for element in elements_y:
+
+        elements_X_aux = sm.add_constant(dataframe[element_x])      # elements_x but adding a '1' column for the reg line
+        model = sm.OLS(dataframe[element],elements_X_aux).fit()       # generate model 
+        trendline = model.predict(elements_X_aux)                   # generate trendline   
+
+        # Now generate the trace for the trendline and add it at the data_vector
+        trendline_trace = go.Scatter(
+            x=dataframe[element_x],
+            y=trendline,
+            mode='lines',
+            name=f'{title}: {element}'
+        )
+        trendline_trace.line.dash = 'dashdot'  #'solid', 'dash', 'dot'
+
+        trendline_vector.append(trendline_trace)
+    
+    return trendline_vector
+
+def generate_scatter_plot_user(dataframe,key_user,element_x,elements_y,title="Unnamed Scatter Plot",user_reg_line=False,reg_line=False):
+    # Returns a scatter plot, given a dataframe, and elements to plot, can integrate a regression
+    # line if specified
+    # 
+    # INPUTS:
+    #   - dataframe: containing all data
+    #   - key user: ID of the user that data is needed
+    #   - element_x: x axis data
+    #   - elements_y: vector that contains all the different data to be plotted
+    #   - title: title of the graph
+    #   - reg_line: boolean to indicate if a reg_line is wanted. Default value is False
+    # OUTPUTS:
+    #   - plotly figure if OK
+    #   - None if error occured
+    
+
+    # Get user dataframe
+    if key_user in dataframe.index:
+        user_df = dataframe.loc[dataframe.index == key_user]
+    else:
+        return None
+
+    # Plot generation for each data source passed as parameter elements_y
+    
+    data_vector=[]          # This vector will contain all traces, one for each element_y
+    
+    for element in elements_y:
+        trace = go.Scatter(
+            x=user_df[element_x],
+            y=user_df[element],
+            mode='markers',
+            name=element
+        )
+        data_vector.append(trace)
+        
+    # A trendline is needed if user_reg_line is True, generate trace using trace_trendline and
+    # add to data_vector
+    if user_reg_line:
+        user_trace_trend = trace_trendline(user_df,element_x,elements_y,'User Trendline')
+        for trace in user_trace_trend:
+            data_vector.append(trace)
+    
+    # A trendline is needed if reg_line is True
+    if reg_line:
+        trace_trend = trace_trendline(dataframe,element_x,elements_y)
+        for trace in trace_trend:
+            data_vector.append(trace)
+   
+    # Definition of the basic layout of the graphic, adding graphic title and the x_axis name
+    layout = go.Layout(
+        title = title,
+        xaxis=dict(title=element_x)
+    )
+
+    # From all traces, we generate the figure
+    fig = go.Figure(data=data_vector,layout=layout)
+
+    # Get the maximum and minimum value of element_x for better graph visualization
+    x_max = user_df[element_x].max() 
+    x_min = user_df[element_x].min() 
+    fig.update_xaxes(range=[x_min,x_max])
+
+
+    return fig
+
+def generate_df_from_elements(file_route,index,rows,key_cols,elements):
+    # Returns a dataframe containing all data passed as 'elements' structured following
+    # 'key_cols'. Additionally, an index and number of rows has to be added.
+    # Note that the dataframe is generated from an excel
+    # 
+    # INPUTS
+    #   - file_route:   relative route to the excel file
+    #   - index:        name of the column used as index
+    #   - rows:         number of rows wanted for the dataframe 
+    #   - key_cols:     name of the columns used to identify each vehicle in the dataframe
+    # 
+    # OUTPUT  
+    #   -   dataframe generated
+
+    # Read and save the xlsx file in 'excel' variable
+    excel = pd.ExcelFile(file_route)
+
+    # Generate an empty dataframe to which 'key_cols' will be added and index will be
+    # determined
+    custom_df = pd.DataFrame()
+    num_key_cols = len(key_cols)
+    key_cols_found = 0
+
+    # This loop finds whether there are all 'key_cols' in one sheet, if so, copy them
+    # onto the custom dataframe 'custom_df' and sets the index
+    for sheet in excel.sheet_names:
+        df = pd.read_excel(file_route, sheet_name=sheet, nrows=rows)
+
+        for column_name in df.columns:
+            for key_column in key_cols:
+                if column_name == key_column:
+                    key_cols_found += 1
+
+        if key_cols_found == num_key_cols:
+            custom_df = df[key_cols].copy()
+            custom_df.set_index(index,inplace=True)
+            break
+        
+        key_cols_found=0
+    
+    # Once the custom dataframe has all the key columns, add the elements to be included
+    # in the custom dataframe
+
+    num_elements = len(elements) # used to stop the for loop when all elements have been added
+    elements_found = 0
+
+    # Create auxiliary list used to merge both the custom_df with the data selected
+    columns_to_merge=[]
+    for element in key_cols:
+        if element != index:
+            columns_to_merge.append(element)
+
+    # Iterate through the excel sheets
+    for sheet in excel.sheet_names:
+        df = pd.read_excel(file_route, sheet_name=sheet, index_col=index, nrows=rows)
+
+        for column_name in df.columns:
+            for element in elements:
+                if column_name == element:
+                    columns_to_merge.append(element) #add to the auxiliary list the element to merge
+                    custom_df = pd.merge(custom_df,df[columns_to_merge],on=key_cols,how='inner')
+                    columns_to_merge.pop() #retrieve it for the next iteration
+                    elements_found += 1
+        
+        if(elements_found == num_elements):
+            break
+    custom_df = custom_df.dropna(axis=1) # erase any column with NaN
+
+    # Reorganise data (not strictly necessary, helpfull to debug)
+    custom_df = custom_df.sort_values(by=key_cols)
+
+    return custom_df
+
+def generate_df_from_vehicle(file_route,searh_object,index='VIN',check_columns=['Id','Timestamp']):
+    
+    # Read and save the xlsx file in 'excel' variable
+    excel = pd.ExcelFile(file_route)
+
+    # Generate an empty dataframe to which all information will be stored
+    custom_df = pd.DataFrame()
+    custom_df[index] = None
+    for element in check_columns:
+        custom_df[element] = None
+    custom_df.set_index(index,inplace=True)
+
+    num_check_columns = len(check_columns)
+
+    for sheet in excel.sheet_names:
+        print(sheet)
+        df = pd.read_excel(file_route,sheet_name=sheet,index_col=index)
+
+        # Check if sheet has all key columns
+        
+        if searh_object in df.index:
+            fila = df.loc[searh_object]
+            custom_df = pd.merge(custom_df,fila,on=check_columns,how='right')
+            custom_df = custom_df.dropna(axis=1)  
+    
+
+    
+    return custom_df
+
+
+
+def generate_line_chart(dataframe,element_x,elements_y,title='Unnamed Line Chart'):
+
+
+    trace_vector=[]
+    for element in elements_y:
+        dataframe = dataframe.sort_values(by=[element_x,element])
+        trace = go.Scatter(x=dataframe[element_x], y=dataframe[element], mode='lines', name=element)
+        trace_vector.append(trace)
+
+    # Definition of the basic layout of the graphic, adding graphic title and the x_axis name
+    layout = go.Layout(
+        title = title,
+        xaxis=dict(title=element_x)
+    )
+
+    # From all traces, we generate the figure
+    fig = go.Figure(data=trace_vector,layout=layout)
     
     return fig
