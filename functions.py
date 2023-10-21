@@ -471,4 +471,28 @@ def df_from_vehicle(file_route,searh_object,index='VIN',check_columns=['Id','Tim
     
     return custom_df
 
+def df_get_elements_tag(dataframe):
+    # This vector returns a vector containing all names of all columns and the name
+    # of the index in case there is one given a dataframe dataframe
+    # 
+    # INPUTS
+    #   - dataframe:    dataframe to read
+    # 
+    # OUTPUTS
+    #   - index:        name of the index, None if index is default
+    #   - tags_vector:  vector containing all names of the dataframe
 
+    # Get all columns (this will not include the index if there is one)
+    tags_vector=[]
+
+    for element in dataframe.columns:
+        tags_vector.append(element)
+    
+    # Check if the index is the default: 0, 1, 2, 3, .... len(dataframe)-1
+    if dataframe.index.equals(pd.RangeIndex(start=0, stop=len(dataframe), step=1)):
+        index = None
+    
+    else:
+        index = dataframe.index.name
+
+    return index, tags_vector
