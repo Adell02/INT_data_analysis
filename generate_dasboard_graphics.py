@@ -11,6 +11,13 @@ from consumption_vs_temp import *
 
 
 def generate_dashboard_graphics(data_file_route):
+    # Generates 7 graphics to be displayed on a fixed dashboard
+    # 
+    # INPUT:
+    #   - data_file_route: relative path the data file
+    # 
+    # OUTPUT:
+    #   - list of figures created
 
     # Fistly, create a dataframe containing all columns needed:
     LIST_COLUMNS = ['City (km)','Sport (km)','Flow (km)','Sail (km)','Regen (km)',

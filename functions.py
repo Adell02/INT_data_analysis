@@ -136,40 +136,6 @@ def generate_pie_chart(dataframe,elements,title='Unnamed pie chart'):
     
     return fig
 
-"""
-def test_scatter_plot_user(dataframe,key_user,elements,title='Unnamed scatter plot',reg_line = False):
-    
-    if len(elements) != 2:
-        return None
-
-    # De dataframe, cogemos sólo la información disponible del usuario que nos han pasado
-    # From dataframe, we store in an auxiliary dataframe only the information corresponding to
-    # the key_user. It will search for it in key_columns
-    if key_user in dataframe.index:
-        user_df = dataframe.loc[dataframe.index == key_user]
-    else:
-        return None
-    
-    # Check if we want a regression line
-    if reg_line == True:
-        trend='ols'
-    else:
-        trend = False
-    
-    # Plot generation
-    fig = px.scatter(
-        user_df,
-        x=elements[0],
-        y=elements[1],
-        opacity=0.65,
-        trendline=trend,
-        trendline_color_override='darkblue'
-    )
-
-
-    return fig
-"""
-
 def trace_trendline(dataframe,element_x,elements_y,title='Trendline'):
 
     # This function generates a trendline (performing OLS) given a element to display on the
