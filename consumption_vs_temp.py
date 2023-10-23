@@ -34,7 +34,7 @@ NUM_ROWS = 10000
 DISTANCE_COLUMN = 'Total (km)'
 TEMP_COLUMN = 'Avg temp'
 SOC_COLUMN = 'SoC delta (%)'
-TEXT_OFFSET = -100
+TEXT_OFFSET = 500
 
 
 def weigh(value,mean,std_dev):
@@ -53,14 +53,28 @@ def weigh(value,mean,std_dev):
     return weighted_val
 
 
-def get_consumption_vs_temp(data_file_route,num_samples=10000):
+def get_consumption_vs_temp(df):
+    # Generates a figure showing the relation of two variables: battery temperature and consumption
+    # of motorcycle
+    # 
+    # INPUTS:
+    #   - df: it must contain the necessary columns to generate the graphic
+    # OUTPUTS:
+    #   - -1 if df does not contain all necessary columns
+    #   - figure to be plotted, it includes the Pearson correlation of both variables
+    # 
     
-    # 1. Generate a dataframe containing all data necessary:
+    # 1. Check if dataframe contains all data necessary:
     #   - Total (km)
     #   - SoC delta (%)
     #   - Avg temp (ºC * 10)  --> average temperature of the BMS (then, battery temp)
     KEY_ELEMENTS = [DISTANCE_COLUMN,SOC_COLUMN,TEMP_COLUMN]
-    df = df_from_elements(data_file_route,INDEX,num_samples,KEY_COLUMNS,KEY_ELEMENTS)
+    check = 0
+    for element in KEY_ELEMENTS:
+        if element in df:
+            check += 1
+    if check != len(KEY_ELEMENTS):
+        return -1
 
     # 2. Generate and compute the consume column. Since generate_df_from_elements assures that 
     # the dataframe is well ordered, we don't have to check the index
@@ -93,13 +107,14 @@ def get_consumption_vs_temp(data_file_route,num_samples=10000):
     
     # Get the position of the top-right corner to display the text in that point
    
-    x_position_filtered = max(df_filtered[TEMP_COLUMN])+TEXT_OFFSET
+    x_position_filtered = min(df_filtered[TEMP_COLUMN])+TEXT_OFFSET
     y_position_filtered = max(df_filtered[CONSUMPTION_COLUMN])
 
     # Generate text and place it in the figures
-    fig_text = f'Correlation: {round(correlation*100,2)}%'
+    fig_text = f'r: {round(correlation*100,2)}%'
     fig_filtered.add_trace(go.Scatter(x=[x_position_filtered], y=[y_position_filtered], mode="text",text=fig_text, showlegend=False))
-    fig_filtered.update_traces(textfont=dict(size=15, color="black"))
+    fig_filtered.update_traces(textfont=dict(size=15, color="black"),marker=dict(size=1))
+
 
     """
     This second part consists of showing a different analyses of the situation. Now we are going to weigh the points to be shown
@@ -130,16 +145,16 @@ def get_consumption_vs_temp(data_file_route,num_samples=10000):
 
     correlation = df_weighed[CONSUMPTION_COLUMN].corr(df_weighed[TEMP_COLUMN])
    
-    x_position_weighed = max(df_weighed[TEMP_COLUMN])+TEXT_OFFSET
+    x_position_weighed = min(df_weighed[TEMP_COLUMN])+TEXT_OFFSET
     y_position_weighed = max(df_weighed[CONSUMPTION_COLUMN])
 
     # Generate text and place it in the figures
-    fig_text = f'Correlation: {round(correlation*100,2)}%'
+    fig_text = f'r: {round(correlation*100,2)}%'
     fig_weighed.add_trace(go.Scatter(x=[x_position_weighed], y=[y_position_weighed], mode="text",text=fig_text, showlegend=False))
-    fig_weighed.update_traces(textfont=dict(size=15, color="black"))
+    fig_weighed.update_traces(textfont=dict(size=10, color="black"),marker=dict(size=1))
 
     
-    return fig_filtered, fig_weighed
+    return fig_filtered
 
 
 """

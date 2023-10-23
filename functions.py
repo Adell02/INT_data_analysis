@@ -83,7 +83,7 @@ def generate_go_pie(dataframe,elements,title='Unnamed pie chart'):
         aux_value = 0
         for value in dataframe[element]:
             aux_value += value
-        total_value.append(value)
+        total_value.append(aux_value)
     
     # Generate pie chart
     fig = go.Pie(
