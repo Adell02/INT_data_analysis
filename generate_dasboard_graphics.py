@@ -10,11 +10,12 @@ from functions import *
 from consumption_vs_temp import *
 
 
-def generate_dashboard_graphics(data_file_route):
+def generate_dashboard_graphics(data_file_route,samples=None):
     # Generates 7 graphics to be displayed on a fixed dashboard
     # 
     # INPUT:
     #   - data_file_route: relative path the data file
+    #   - samples: number of samples to be plotted. Default value is None (all samples)
     # 
     # OUTPUT:
     #   - list of figures created
@@ -32,7 +33,7 @@ def generate_dashboard_graphics(data_file_route):
     KEY_COLS = ['VIN','Id','Timestamp']
     
     # Generate a dataframe containing all columns listed before
-    df =df_from_elements(data_file_route,INDEX,None,KEY_COLS,LIST_COLUMNS)
+    df =df_from_elements(data_file_route,INDEX,samples,KEY_COLS,LIST_COLUMNS)
     
     # Generate functions in order and add them to a figures vector
     fig_vector = []
