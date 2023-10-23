@@ -94,7 +94,7 @@ def generate_go_pie(dataframe,elements,title='Unnamed pie chart'):
 
     return fig
 
-def pie_chart(dataframe,elements,title='Unnamed pie chart'):
+def generate_pie_chart(dataframe,elements,title='Unnamed pie chart'):
 
     # This function creates a plotable pie chart figure. It can create subplots containing
     # multiple pie_charts in case it is needed to segregate certain information into different
@@ -112,15 +112,23 @@ def pie_chart(dataframe,elements,title='Unnamed pie chart'):
     # Get the number of elements passed as parameter
     num_elements = len(elements)
 
-    # Create subplots, we suppose that the user wants the plots to be one next to the other
-    fig = make_subplots(
-        rows=1,
-        cols=num_elements,
-        specs=[[{'type':'domain'}, {'type':'domain'}]]
-    )
+    # Check if elements is a single vector or multiple to generate one or multiple pie_charts
+    if isinstance(elements,(list,tuple)) and isinstance(elements[0],str):
+        # elements is a vector (only 1 pie chart is needed)
+        fig_trace = generate_go_pie(dataframe,elements,'')
+        fig = go.Figure(fig_trace)
 
-    for i in range(num_elements):
-        fig.add_trace(generate_go_pie(dataframe,elements[i],''),1,i+1)
+    else:
+        # elements is a vector (more than 1 pie chart is needed)
+        # Create subplots, we suppose that the user wants the plots to be one next to the other
+        fig = make_subplots(
+            rows=1,
+            cols=num_elements,
+            specs=[[{'type':'domain'}, {'type':'domain'}]]
+        )
+
+        for i in range(num_elements):
+            fig.add_trace(generate_go_pie(dataframe,elements[i],''),1,i+1)
 
     fig.update_traces(hole=.4, hoverinfo="label+percent+name")
 
