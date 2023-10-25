@@ -470,3 +470,45 @@ def df_get_elements_tag(dataframe):
         index = dataframe.index.name
 
     return index, tags_vector
+
+def check_user_values(usr_dataframe):
+    # Load the JSON file
+    #INPUT
+    #usr_dataframe: Un DataFrame de pandas que contiene los datos que se van a verificar. Los nombres de las columnas del DataFrame representan los elementos cuyos valores se verificarán.
+
+    #OUTPUTS
+    #result:Devuelve True si todos los valores están dentro de los rangos, y False si al menos un valor está fuera de los rangos o si hay elementos no encontrados en el archivo JSON.
+    
+    #elements_check: Un diccionario que contiene información detallada sobre la verificación de cada elemento. Para cada elemento, se almacenan los resultados de la verificación mínima (Check_min), la verificación máxima (Check_max).Este diccionario proporciona detalles sobre qué valores no cumplen con los criterios de verificación.
+    
+    
+
+    with open('param_batery.json', 'r') as archivo:
+        dict_param = json.load(archivo)
+
+    result = True
+    elements_check = {}
+
+    for element in usr_dataframe.columns:
+        min_value = dict_param[element]['minimum']
+        max_value = dict_param[element]['maximum']
+        
+        check_min = True  # Initialize the verification variables
+        check_max = True
+
+        for value in usr_dataframe[element]:
+            if value < min_value or value > max_value:
+                check_min = False
+                check_max = False
+
+        elements_check[element] = {
+            'Check_min': check_min,
+            'Check_max': check_max,
+            'Check': check_min or check_max
+        }
+
+        if not elements_check[element]['Check']:
+            result = False
+
+    return result, elements_check
+
