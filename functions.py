@@ -5,6 +5,7 @@ from plotly.subplots import make_subplots
 import numpy as np
 import statsmodels.api as sm
 import os
+import json
 
 def generate_multi_histogram(dataframe,elements,units='',start=-200,end=200,step=10, title='Unnamed distribution'):
     
