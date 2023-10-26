@@ -114,6 +114,12 @@ def get_consumption_vs_temp(df):
     fig_text = f'r: {round(correlation*100,2)}%'
     fig_filtered.add_trace(go.Scatter(x=[x_position_filtered], y=[y_position_filtered], mode="text",text=fig_text, showlegend=False))
     fig_filtered.update_traces(textfont=dict(size=15, color="black"),marker=dict(size=1))
+    fig_filtered.update_layout(legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99
+))
 
 
     """
