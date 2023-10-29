@@ -113,29 +113,55 @@ def generate_pie_chart(dataframe,elements,title='Unnamed pie chart'):
     # Get the number of elements passed as parameter
     num_elements = len(elements)
 
-    # Check if elements is a single vector or multiple to generate one or multiple pie_charts
-    if isinstance(elements,(list,tuple)) and isinstance(elements[0],str):
-        # elements is a vector (only 1 pie chart is needed)
-        fig_trace = generate_go_pie(dataframe,elements,'')
-        fig = go.Figure(fig_trace)
+    # Create subplots, we suppose that the user wants the plots to be one next to the other
+    fig = make_subplots(
+        rows=1,
+        cols=num_elements,
+        specs=[[{'type':'domain'}, {'type':'domain'}]]
+    )
 
-    else:
-        # elements is a vector (more than 1 pie chart is needed)
-        # Create subplots, we suppose that the user wants the plots to be one next to the other
-        fig = make_subplots(
-            rows=1,
-            cols=num_elements,
-            specs=[[{'type':'domain'}, {'type':'domain'}]]
-        )
-
-        for i in range(num_elements):
-            fig.add_trace(generate_go_pie(dataframe,elements[i],''),1,i+1)
+    for i in range(num_elements):
+        fig.add_trace(generate_go_pie(dataframe,elements[i],''),1,i+1)
 
     fig.update_traces(hole=.4, hoverinfo="label+percent+name")
 
     fig.update_layout(title_text=title)
     
     return fig
+
+"""
+def test_scatter_plot_user(dataframe,key_user,elements,title='Unnamed scatter plot',reg_line = False):
+    
+    if len(elements) != 2:
+        return None
+
+    # De dataframe, cogemos sólo la información disponible del usuario que nos han pasado
+    # From dataframe, we store in an auxiliary dataframe only the information corresponding to
+    # the key_user. It will search for it in key_columns
+    if key_user in dataframe.index:
+        user_df = dataframe.loc[dataframe.index == key_user]
+    else:
+        return None
+    
+    # Check if we want a regression line
+    if reg_line == True:
+        trend='ols'
+    else:
+        trend = False
+    
+    # Plot generation
+    fig = px.scatter(
+        user_df,
+        x=elements[0],
+        y=elements[1],
+        opacity=0.65,
+        trendline=trend,
+        trendline_color_override='darkblue'
+    )
+
+
+    return fig
+"""
 
 def trace_trendline(dataframe,element_x,elements_y,title='Trendline'):
 
@@ -417,8 +443,7 @@ def df_from_elements(file_route,index,rows,key_cols,elements):
 
     return custom_df
 
-def df_from_vehicle(file_route,searh_object,index='VIN',check_columns=['Id','Timestamp']):
-    
+def df_from_vehicle(file_route, search_object, index='VIN', check_columns=['Id', 'Timestamp']):
     # Read and save the xlsx file in 'excel' variable
     excel = pd.ExcelFile(file_route)
 
@@ -427,24 +452,23 @@ def df_from_vehicle(file_route,searh_object,index='VIN',check_columns=['Id','Tim
     custom_df[index] = None
     for element in check_columns:
         custom_df[element] = None
-    custom_df.set_index(index,inplace=True)
+    custom_df.set_index(index, inplace=True)
 
     num_check_columns = len(check_columns)
 
     for sheet in excel.sheet_names:
-        print(sheet)
-        df = pd.read_excel(file_route,sheet_name=sheet,index_col=index)
+        #if sheet!="Resumen":
+        df = pd.read_excel(file_route, sheet_name=sheet, index_col=index)
 
         # Check if sheet has all key columns
-        
-        if searh_object in df.index:
-            fila = df.loc[searh_object]
-            custom_df = pd.merge(custom_df,fila,on=check_columns,how='right')
-            custom_df = custom_df.dropna(axis=1)  
-    
+        if all(col in df.columns for col in check_columns):
+            if search_object in df.index:
+                fila = df.loc[search_object]
+                custom_df = pd.merge(custom_df, fila, on=check_columns, how='right')
+                custom_df = custom_df.dropna(axis=1)
 
-    
     return custom_df
+
 
 def df_get_elements_tag(dataframe):
     # This vector returns a vector containing all names of all columns and the name
@@ -471,45 +495,3 @@ def df_get_elements_tag(dataframe):
         index = dataframe.index.name
 
     return index, tags_vector
-
-def check_user_values(usr_dataframe):
-    # Load the JSON file
-    #INPUT
-    #usr_dataframe: Un DataFrame de pandas que contiene los datos que se van a verificar. Los nombres de las columnas del DataFrame representan los elementos cuyos valores se verificarán.
-
-    #OUTPUTS
-    #result:Devuelve True si todos los valores están dentro de los rangos, y False si al menos un valor está fuera de los rangos o si hay elementos no encontrados en el archivo JSON.
-    
-    #elements_check: Un diccionario que contiene información detallada sobre la verificación de cada elemento. Para cada elemento, se almacenan los resultados de la verificación mínima (Check_min), la verificación máxima (Check_max).Este diccionario proporciona detalles sobre qué valores no cumplen con los criterios de verificación.
-    
-    
-
-    with open('param_batery.json', 'r') as archivo:
-        dict_param = json.load(archivo)
-
-    result = True
-    elements_check = {}
-
-    for element in usr_dataframe.columns:
-        min_value = dict_param[element]['minimum']
-        max_value = dict_param[element]['maximum']
-        
-        check_min = True  # Initialize the verification variables
-        check_max = True
-
-        for value in usr_dataframe[element]:
-            if value < min_value or value > max_value:
-                check_min = False
-                check_max = False
-
-        elements_check[element] = {
-            'Check_min': check_min,
-            'Check_max': check_max,
-            'Check': check_min or check_max
-        }
-
-        if not elements_check[element]['Check']:
-            result = False
-
-    return result, elements_check
-
