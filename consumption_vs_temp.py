@@ -32,7 +32,10 @@ INDEX = 'VIN'
 KEY_COLUMNS = ['VIN','Id','Timestamp']
 NUM_ROWS = 10000
 DISTANCE_COLUMN = 'Total (km)'
-TEMP_COLUMN = 'Avg temp'
+# TEMP_COLUMN = 'Motor min T (°C)'
+# TEMP_COLUMN = 'Avg temp'
+# TEMP_COLUMN = 'Inv  min T (°C)'
+TEMP_COLUMN = 'Average V'
 SOC_COLUMN = 'SoC delta (%)'
 TEXT_OFFSET = 500
 
@@ -92,7 +95,9 @@ def get_consumption_vs_temp(df):
     
     # 4. Get a scatter plot
     fig_filtered = generate_scatter_plot(df_filtered,TEMP_COLUMN,CONSUMPTION_COLUMN,'Consumption vs Temp Filtered',True)
-
+    fig_filtered.update_layout(scene=dict(
+        xaxis = dict(range=[min(df[TEMP_COLUMN]),max(df[TEMP_COLUMN])])
+    ))
     # 5. Get the correlation between variables
 
     """
@@ -120,6 +125,7 @@ def get_consumption_vs_temp(df):
         xanchor="right",
         x=0.99
 ))
+    return fig_filtered
 
 
     """
@@ -132,7 +138,7 @@ def get_consumption_vs_temp(df):
 
     This will ensure that the more relevant samples are those that correspond to a trip distance closer to the mean
     """
-
+"""
     # 1. Get the mean and standard dev
     mean = df[DISTANCE_COLUMN].mean()
     std_dev = df[DISTANCE_COLUMN].std()
@@ -159,8 +165,9 @@ def get_consumption_vs_temp(df):
     fig_weighed.add_trace(go.Scatter(x=[x_position_weighed], y=[y_position_weighed], mode="text",text=fig_text, showlegend=False))
     fig_weighed.update_traces(textfont=dict(size=10, color="black"),marker=dict(size=1))
 
-    
+   
     return fig_filtered
+"""
 
 
 """

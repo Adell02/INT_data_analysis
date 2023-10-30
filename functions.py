@@ -6,62 +6,13 @@ import numpy as np
 import statsmodels.api as sm
 import os
 import json
+from scipy import interpolate
 
-def generate_multi_histogram(dataframe,elements,units='',start=-200,end=200,step=10, title='Unnamed distribution'):
-    
 
-    #First we generate the figure
-    fig = go.Figure()
-    
-    # First, we need to check if elements is a vector or a string
-    if isinstance(elements,str):
-        x_values=[]
-        for value in dataframe[elements]:
-          x_values.append(value)  
-        
-        fig.add_trace(go.Histogram(
-            x=x_values,
-            histnorm='percent',
-            name=elements,
-            xbins=dict(
-                start=start,
-                end=end,
-                size=step
-            ),
-            opacity=0.85
-        ))
-    else:
-        #Now we add a new trace for every element
-        num_elements = len(elements)
-        for i in range(num_elements):
-            x_values=[]
-            for value in dataframe[elements[i]]:
-                x_values.append(value)  
-            
-            fig.add_trace(go.Histogram(
-                x=x_values,
-                histnorm='percent',
-                name=elements[i],
-                xbins=dict(
-                    start=start,
-                    end=end,
-                    size=step
-                ),
-                opacity=0.85
-            ))
-    
-    #Final configuration of the figure
-    fig.update_layout(
-        title_text=title, # title of plot
-        xaxis_title_text=units, # xaxis label
-        yaxis_title_text='Percentage', # yaxis label
-        bargap=0.2, # gap between bars of adjacent location coordinates
-        bargroupgap=0.1 # gap between bars of the same location coordinates
-    )
 
-    return fig
+"""********************     Trace generation    ********************"""
 
-def generate_go_pie(dataframe,elements,title='Unnamed pie chart'):
+def trace_pie(dataframe,elements,title='Unnamed pie chart'):
     # Pie chart figure generator given a dataframe, which contains all the necessary data,
     # elements to display and the title of the pie chart
 
@@ -75,7 +26,7 @@ def generate_go_pie(dataframe,elements,title='Unnamed pie chart'):
     #   -title
     # 
     # OUTPUTS
-    #   - go.Pie element 
+    #   - go.Pie trace 
     
     # For each element (column), add all its values and save it into a data vector
     total_value=[]
@@ -87,47 +38,13 @@ def generate_go_pie(dataframe,elements,title='Unnamed pie chart'):
         total_value.append(aux_value)
     
     # Generate pie chart
-    fig = go.Pie(
+    trace = go.Pie(
         labels=elements,
         values=total_value,
         name=title
     )
 
-    return fig
-
-def generate_pie_chart(dataframe,elements,title='Unnamed pie chart'):
-
-    # This function creates a plotable pie chart figure. It can create subplots containing
-    # multiple pie_charts in case it is needed to segregate certain information into different
-    # categories but visualised together
-    # 
-    # INPUTS:
-    #   - dataframe
-    #   - elements: this is an array of arrays (every position of which contains the names of a
-    #               single pie_chart)
-    #   - title
-    # 
-    # OUTPUTS:
-    #   - pie chart figure  
-
-    # Get the number of elements passed as parameter
-    num_elements = len(elements)
-
-    # Create subplots, we suppose that the user wants the plots to be one next to the other
-    fig = make_subplots(
-        rows=1,
-        cols=num_elements,
-        specs=[[{'type':'domain'}, {'type':'domain'}]]
-    )
-
-    for i in range(num_elements):
-        fig.add_trace(generate_go_pie(dataframe,elements[i],''),1,i+1)
-
-    fig.update_traces(hole=.4, hoverinfo="label+percent+name")
-
-    fig.update_layout(title_text=title)
-    
-    return fig
+    return trace
 
 """
 def test_scatter_plot_user(dataframe,key_user,elements,title='Unnamed scatter plot',reg_line = False):
@@ -261,6 +178,121 @@ def trace_scatter_plot(dataframe,element_x,elements_y,reg_line=False):
 
     return trace_vector
 
+def trace_bar_chart(dataframe,element_x,elements_y):
+    
+    # Generate a trace_vector to contain all traces for a Bar Chart
+    trace_vector = []
+    # Check if elements_y is a single element or multiple
+    if isinstance(elements_y,str):
+        trace_vector.append(go.Bar(x=dataframe[element_x],y=dataframe[elements_y],name = elements_y))
+    
+    else:
+        for element in elements_y:
+            trace_vector.append(go.Bar(x=dataframe[element_x],y=dataframe[element],name = element))
+    
+    
+    return trace_vector
+
+
+"""********************     Figures generation    ********************"""
+
+def generate_pie_chart(dataframe,elements,title='Unnamed pie chart'):
+
+    # This function creates a plotable pie chart figure. It can create subplots containing
+    # multiple pie_charts in case it is needed to segregate certain information into different
+    # categories but visualised together
+    # 
+    # INPUTS:
+    #   - dataframe
+    #   - elements: this is an array of arrays (every position of which contains the names of a
+    #               single pie_chart)
+    #   - title
+    # 
+    # OUTPUTS:
+    #   - pie chart figure  
+
+    # Get the number of elements passed as parameter
+    num_elements = len(elements)
+
+    # Check if elements is a single vector or multiple to generate one or multiple pie_charts
+    if isinstance(elements,(list,tuple)) and isinstance(elements[0],str):
+        # elements is a vector (only 1 pie chart is needed)
+        fig_trace = trace_pie(dataframe,elements,'')
+        fig = go.Figure(fig_trace)
+
+    else:
+        # elements is a vector (more than 1 pie chart is needed)
+        # Create subplots, we suppose that the user wants the plots to be one next to the other
+        fig = make_subplots(
+            rows=1,
+            cols=num_elements,
+            specs=[[{'type':'domain'}, {'type':'domain'}]]
+        )
+        
+        # We use a integer loop so we can assign the subplot position of each pie chart
+        for i in range(num_elements):
+            fig.add_trace(trace_pie(dataframe,elements[i],''),1,i+1)
+
+    fig.update_traces(hole=.4, hoverinfo="label+percent+name")
+
+    fig.update_layout(title_text=title)
+    
+    return fig
+
+def generate_multi_histogram(dataframe,elements,units='',start=-200,end=200,step=10, title='Unnamed distribution'):
+    
+
+    #First we generate the figure
+    fig = go.Figure()
+    
+    # First, we need to check if elements is a vector or a string
+    if isinstance(elements,str):
+        x_values=[]
+        for value in dataframe[elements]:
+          x_values.append(value)  
+        
+        fig.add_trace(go.Histogram(
+            x=x_values,
+            histnorm='percent',
+            name=elements,
+            xbins=dict(
+                start=start,
+                end=end,
+                size=step
+            ),
+            opacity=0.85
+        ))
+    else:
+        #Now we add a new trace for every element
+        num_elements = len(elements)
+        for i in range(num_elements):
+            x_values=[]
+            for value in dataframe[elements[i]]:
+                x_values.append(value)  
+            
+            fig.add_trace(go.Histogram(
+                x=x_values,
+                histnorm='percent',
+                name=elements[i],
+                xbins=dict(
+                    start=start,
+                    end=end,
+                    size=step
+                ),
+                opacity=0.85
+            ))
+    
+    #Final configuration of the figure
+    fig.update_layout(
+        title_text=title, # title of plot
+        xaxis_title_text=units, # xaxis label
+        yaxis_title_text='Percentage', # yaxis label
+        bargap=0.2, # gap between bars of adjacent location coordinates
+        bargroupgap=0.1 # gap between bars of the same location coordinates
+    )
+
+    return fig
+
 def generate_scatter_plot(dataframe,element_x,elements_y,title='Unnamed Scatter Plot',reg_line=False):
     # Returns a scatter plot trace, given a dataframe, and elements to plot, can integrate a regression
     # line if specified
@@ -366,6 +398,57 @@ def generate_line_chart(dataframe,element_x,elements_y,title='Unnamed Line Chart
     fig = go.Figure(data=trace_vector,layout=layout)
     
     return fig
+
+def generate_bar_chart(dataframe,element_x,elements_y,title='Unnamed Bar Chart'):
+    
+    trace_vector = trace_bar_chart(dataframe,element_x,elements_y)
+
+    fig = go.Figure(data=trace_vector)
+
+    fig.update_layout(
+        title = title,
+        xaxis_title = element_x,
+        barmode = 'group'               #Options available: group, stack, relative
+    )
+    
+    return fig
+
+def generate_response_surface(dataframe,element_x,element_y,element_z,title='Unnamed Response Surface'):
+    
+    # To simplify notation, specify axis
+    x = dataframe[element_x]
+    y = dataframe[element_y]
+    z = dataframe[element_z]
+
+    # Generate a grid that will be used to display the 3D data. The xi and y1 rank, must 
+    # reach all data from element_x and element_y
+    x_grid = np.linspace(min(x),max(x),500)
+    y_grid = np.linspace(min(y),max(y),500)
+    x_grid, y_grid = np.meshgrid(x_grid,y_grid)
+
+    # Interpolate data in the grid
+    z_grid = interpolate.griddata((x, y), z, (x_grid, y_grid), method='cubic')
+    
+    # Generate surface from the interpolated grid
+    fig = go.Figure(data=[go.Surface(z=z_grid, x=x_grid, y=y_grid)])
+    
+    # Add a topographic map to the figure
+    fig.update_traces(contours_z=dict(
+        show=True, 
+        usecolormap=True,
+        highlightcolor="limegreen",
+        project_z=True))
+    
+    # Edit axis' names and aspect of the figure
+    fig.update_layout(scene=dict(
+        xaxis_title = element_x,
+        yaxis_title = element_y,
+        zaxis_title = element_z,
+        aspectmode = 'cube'
+    ))
+    return fig
+
+"""********************     Dataframe funcitons    ********************"""
 
 def df_from_elements(file_route,index,rows,key_cols,elements):
     # Returns a dataframe containing all data passed as 'elements' structured following
@@ -495,3 +578,112 @@ def df_get_elements_tag(dataframe):
         index = dataframe.index.name
 
     return index, tags_vector
+
+def df_check_user_values(usr_dataframe):
+    # Load the JSON file
+    #INPUT
+    #usr_dataframe: Un DataFrame de pandas que contiene los datos que se van a verificar. Los nombres de las columnas del DataFrame representan los elementos cuyos valores se verificarán.
+    #   
+    #OUTPUTS
+    #   - result:Devuelve True si todos los valores están dentro de los rangos, y False si al menos un valor está fuera de los rangos o si hay elementos no encontrados en el archivo JSON.
+    #elements_check: Un diccionario que contiene información detallada sobre la verificación de cada elemento. Para cada elemento, se almacenan los resultados de la verificación mínima (Check_min), la verificación máxima (Check_max).Este diccionario proporciona detalles sobre qué valores no cumplen con los criterios de verificación.
+    
+    
+
+    with open('param_batery.json', 'r') as archivo:
+        dict_param = json.load(archivo)
+
+    result = True
+    elements_check = {}
+
+    for element in usr_dataframe.columns:
+        min_value = dict_param[element]['minimum']
+        max_value = dict_param[element]['maximum']
+        
+        check_min = True  # Initialize the verification variables
+        check_max = True
+
+        for value in usr_dataframe[element]:
+            if value < min_value or value > max_value:
+                check_min = False
+                check_max = False
+
+        elements_check[element] = {
+            'Check_min': check_min,
+            'Check_max': check_max,
+            'Check': check_min or check_max
+        }
+
+        if not elements_check[element]['Check']:
+            result = False
+
+    return result, elements_check
+
+def df_generate_month(dataframe,data_to_save,month,year):
+    # Given a dataframe, this function will store any data introduced by the user as well as the
+    # year and month to be saved, and afterwards, compare with the data of other months or years
+    # This function applies a mean to all data introduced as parameter
+    # 
+    # INPUT
+    #   - dataframe:        dataframe containing all data   
+    #   - data_to_save:     columns to be "meaned" and saved in the new df
+    #   - month, year:      integers to indicate the month and year of the dataframe
+    # 
+    # OUTPUT
+    #   - -1 if date was erroneous
+    #   - df_month
+
+    # Generate a new dataframe containing the necessary columns
+    df_month = pd.DataFrame(columns = data_to_save)
+
+    # Generate the date string and update df_month
+    if month < 1 or month >12:
+        return -1
+
+    date_string = f'{year}-{month:02}'
+    date = np.datetime64(date_string)
+    df_month['Date'] = [date]
+
+    # Update df_month according to data_to_save
+    for column in data_to_save:
+        if column in dataframe.columns:
+            df_month[column] = [dataframe[column].mean()]
+
+    return df_month
+
+def df_generate_from_months(dataframe_vector,num_months):
+    # Function needed to generate a dataframe containing all months required. To work properly, 
+    # all dataframes must have the same columns. num_months is necessary in case the user only
+    # wants to plot the last few months whereas the dataframe_vector contains more data than wanted
+    # 
+    # INPUT:
+    #   - dataframe_vector: vector containing df_month in each position
+    #   - num_months: number of last month that is wanted to be plotted
+    # 
+    # OPUTPUT:
+    #   - total_df: conatenation of num_months' dataframes
+
+    total_df=pd.DataFrame()
+
+    for i in range(num_months):
+        total_df = pd.concat([total_df,dataframe_vector],ignore_index=True)
+
+    return total_df
+
+def df_add_month_df(df_new,df_vector=None):
+    # This function will add a new month's dataframe to a previously existing dataframe vector,
+    # if none df_vector is passed, it is assumed that it is the first month dataframe to be created
+    # and thus, a new dataframe vector is created
+    # 
+    # INPUT:
+    #   - df_new: new month's dataframe
+    #   - df_vector: preexsisting vector of month_df, if None, a new vector will be created
+    # 
+    # OUTPUT:
+    #   - df_vector with df_new concatenated
+
+    if df_vector == None:
+        df_vector=[]
+    df_vector.append(df_new)
+    return df_vector
+
