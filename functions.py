@@ -622,69 +622,105 @@ def df_check_user_values(usr_dataframe):
 
     return result, elements_check
 
-def df_generate_month(dataframe,data_to_save,month,year):
-    # Given a dataframe, this function will store any data introduced by the user as well as the
-    # year and month to be saved, and afterwards, compare with the data of other months or years
-    # This function applies a mean to all data introduced as parameter
+
+"""********************     Parquet Files funcitons    ********************"""
+    
+
+def df_generate_month(file_path:str,type_name:str,year:int,month:int) -> pd.DataFrame:
+    # Given a month and year, generates a dataframe containing all "data_to_save" information
+    # which will be further (in another function) appended to the parquet file that contains
+    # all months.
     # 
-    # INPUT
-    #   - dataframe:        dataframe containing all data   
+    # From the month and year, it will search the corresponding document in the folder df
+    # 
+    # IMPORTANT: The function saves the mean value of the columns to be saved
+    # 
+    # INPUT  
     #   - data_to_save:     columns to be "meaned" and saved in the new df
     #   - month, year:      integers to indicate the month and year of the dataframe
     # 
     # OUTPUT
-    #   - -1 if date was erroneous
+    #   - -1 if no file matches the date
     #   - df_month
 
-    # Generate a new dataframe containing the necessary columns
-    df_month = pd.DataFrame(columns = data_to_save)
+    """ Se suposa que els noms de les columnes son correctes i no s'ha de fer cap check """
+    MONTHLY_DATA_TRIP = ['Mins','Max speed','Total (km)','Total energy (Wh)','Inv  min T (°C)']
+    MONTHLY_DATA_CHARGE = ['Min temp I','Max temp I']
 
-    # Generate the date string and update df_month
-    if month < 1 or month >12:
+    df = pq.read_parquet(file_path)
+
+    if type_name == 'trip':
+        # Generate a new dataframe containing the necessary columns from both vectors    
+        df_month = pd.DataFrame(columns = MONTHLY_DATA_TRIP)
+        for column_tag in MONTHLY_DATA_TRIP:
+            df_month[column_tag] = None   
+        
+        # Add to the dataframe all columns to be stored. Note that the value saved is
+        # the average 
+        mean_trip = df[MONTHLY_DATA_TRIP].mean()
+        df_month[MONTHLY_DATA_TRIP] = mean_trip
+
+    elif type_name == 'charge':
+        # Generate a new dataframe containing the necessary columns from both vectors    
+        df_month = pd.DataFrame(columns = MONTHLY_DATA_CHARGE)
+        for column_tag in MONTHLY_DATA_CHARGE:
+            df_month[column_tag] = None   
+        
+        # Add to the dataframe all columns to be stored. Note that the value saved is
+        # the average 
+        mean_trip = df[MONTHLY_DATA_CHARGE].mean()
+        df_month[MONTHLY_DATA_CHARGE] = mean_trip
+    
+    else:
         return -1
 
+    # Generate the date string and update df_month
     date_string = f'{year}-{month:02}'
     date = np.datetime64(date_string)
     df_month['Date'] = [date]
 
-    # Update df_month according to data_to_save
-    for column in data_to_save:
-        if column in dataframe.columns:
-            df_month[column] = [dataframe[column].mean()]
-
     return df_month
 
-def df_generate_from_months(dataframe_vector,num_months):
-    # Function needed to generate a dataframe containing all months required. To work properly, 
-    # all dataframes must have the same columns. num_months is necessary in case the user only
-    # wants to plot the last few months whereas the dataframe_vector contains more data than wanted
+def df_generate_from_months(num_months:int) -> pd.DataFrame:
+    # Returns a dataframe containing the critical data stored in month.parquet.
+    # The number of columns will be fixed by "num_columns" so that if the last
+    # x months are requestet. A dataframe containing the last x months will be
+    # returnes
     # 
     # INPUT:
-    #   - dataframe_vector: vector containing df_month in each position
     #   - num_months: number of last month that is wanted to be plotted
     # 
     # OPUTPUT:
-    #   - total_df: conatenation of num_months' dataframes
+    #   - total_df: concatenation of num_months' dataframes
 
-    total_df=pd.DataFrame()
+    # Check if there's any months.parquet file, if not, return -1
+    MONTHS_FILE_PATH = 'df/critical_data.parquet'
+    if not os.path.exists(MONTHS_FILE_PATH):
+        return -1
+    
+    aux_df = pd.read_parquet(MONTHS_FILE_PATH)
 
-    for i in range(num_months):
-        total_df = pd.concat([total_df,dataframe_vector],ignore_index=True)
+    # Get the last "num_months" columns from the critical data file
+    last_months_df = aux_df.tail(num_months)
 
-    return total_df
+    return last_months_df
 
-def df_add_df_file(file_path:str,df_new:pd.DataFrame):
-        if os.path.exists(file_path):
-            df_exist=pd.read_parquet(file_path)
-            df_final=pd.concat([df_exist,df_new])
-            table=pa.Table.from_pandas(df_final)
-            pq.write_table(table, file_path)
+def df_add_month_df(df_new,df_vector=None):
+    # This function will add a new month's dataframe to a previously existing dataframe vector,
+    # if none df_vector is passed, it is assumed that it is the first month dataframe to be created
+    # and thus, a new dataframe vector is created
+    # 
+    # INPUT:
+    #   - df_new: new month's dataframe
+    #   - df_vector: preexsisting vector of month_df, if None, a new vector will be created
+    # 
+    # OUTPUT:
+    #   - df_vector with df_new concatenated
 
-            return df_final
-
-        table=pa.Table.from_pandas(df_new)
-        pq.write_table(table, file_path)
-        return df_new
+    if df_vector == None:
+        df_vector=[]
+    df_vector.append(df_new)
+    return df_vector
 
 def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
 
@@ -718,14 +754,62 @@ def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
         df_add_df_file(filename_last_month,df_new)
 
         return df_new_month
+    
+def df_add_to_month(month_df) -> pd.DataFrame:
+    # This function will either create critical_data.parquet and add this 
+    # month's critical data or just add the critical data to an existing file
+    # 
+    # INPUT:
+    #   - month_df: new month's dataframe
+    # 
+    # OUTPUT:
+    #   - new_month_df: dataframe that has been stored into a .parquet file
+    
+    # Check if there's any months.parquet file, if not, return -1
+    MONTHS_FILE_PATH = 'df/critical_data.parquet'
+    if not os.path.exists(MONTHS_FILE_PATH):
+        new_month_df = df_generate_month()
+    
+    new_month_df = pd.read_parquet(MONTHS_FILE_PATH)
+    
+    return new_month_df
+
+def df_add_df_file(file_path:str,df_new:pd.DataFrame) -> pd.DataFrame:
+    # This function will generate and modify a new .parquet given a filename
+    # and dataframe to ba added.
+    # 
+    # This function has to be used to modify data related to 'run' and 'charge'
+    # files. To do so with the monthly critical data, use df_add_to_month_df()
+    # 
+    # INPUT:
+    #   - file_path
+    #   - df_new: dataframe containing new data to be stored
+    # 
+    # OUTPUT:
+    #   - Resulting dataframe
+    
+    # If file exists
+    if os.path.exist(file_path):
+        # Read and add new data
+        df_exist = pd.read_parquet(file_path)
+        df_final = pd.concat([df_exist,df_new])
+        # Overwrite file
+        table = pa.Table.from_pandas(df_final)
+        pq.write_table(table,file_path)
+       
+        return df_final
+
+    # If file does not exist, generate a new one from df_new
+    table = pa.Table.from_pandas(df_new)
+    pq.write_table(table,file_path)
+    
+    return df_new
 
 
+def df_get_columns_tag(dataframe):
 
+    tag_vector = []
+    for columna in dataframe.columns:
+        tag_vector.append(columna)
 
-
-
-        
-
-
-
-
+    return tag_vector
