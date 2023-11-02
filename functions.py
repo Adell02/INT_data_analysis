@@ -7,6 +7,9 @@ import statsmodels.api as sm
 import os
 import json
 from scipy import interpolate
+import pyarrow as pa
+import pyarrow.parquet as pq
+import datetime
 
 
 
@@ -448,7 +451,7 @@ def generate_response_surface(dataframe,element_x,element_y,element_z,title='Unn
     ))
     return fig
 
-"""********************     Dataframe funcitons    ********************"""
+"""********************     Dataframe functions    ********************"""
 
 def df_from_elements(file_route,index,rows,key_cols,elements):
     # Returns a dataframe containing all data passed as 'elements' structured following
@@ -670,20 +673,59 @@ def df_generate_from_months(dataframe_vector,num_months):
 
     return total_df
 
-def df_add_month_df(df_new,df_vector=None):
-    # This function will add a new month's dataframe to a previously existing dataframe vector,
-    # if none df_vector is passed, it is assumed that it is the first month dataframe to be created
-    # and thus, a new dataframe vector is created
-    # 
-    # INPUT:
-    #   - df_new: new month's dataframe
-    #   - df_vector: preexsisting vector of month_df, if None, a new vector will be created
-    # 
-    # OUTPUT:
-    #   - df_vector with df_new concatenated
+def df_add_df_file(file_path:str,df_new:pd.DataFrame):
+        if os.path.exists(file_path):
+            df_exist=pd.read_parquet(file_path)
+            df_final=pd.concat([df_exist,df_new])
+            table=pa.Table.from_pandas(df_final)
+            pq.write_table(table, file_path)
 
-    if df_vector == None:
-        df_vector=[]
-    df_vector.append(df_new)
-    return df_vector
+            return df_final
+
+        table=pa.Table.from_pandas(df_new)
+        pq.write_table(table, file_path)
+        return df_new
+
+def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
+
+    timestamp_max=df_new['Timestamp'].max()
+    date_max=datetime.datetime.utcfromtimestamp(timestamp_max)
+    year_max=date_max.year
+    month_max=date_max.month
+    timestamp_min=df_new['Timestamp'].min()
+    date_min=datetime.datetime.utcfromtimestamp(timestamp_min)
+    year_min=date_min.year
+    month_min=date_min.month
+
+    
+    #All the data are from the same month
+    if month_min == month_max:
+        filename=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
+        df_add_df_file(filename,df_new)
+        return df_new
+    
+    #Data are from the different month
+    if month_min != month_max:
+        for index, row_data in df_new.iterrows():
+            if row_data['Timestamp']> np.datetime64(f'{year_max}-{month_max:02}-01T00:00:00'):
+                df_new_month=df_new_month.append(df_new.loc[index])
+                df_new=df_new.drop(index)
+        
+        filename_new_month=f'df/{year_max}_{month_max:02}_{type_name}.parquet'
+        df_add_df_file(filename_new_month,df_new_month)
+
+        filename_last_month=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
+        df_add_df_file(filename_last_month,df_new)
+
+        return df_new_month
+
+
+
+
+
+
+        
+
+
+
 
