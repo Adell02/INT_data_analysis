@@ -453,7 +453,7 @@ def generate_response_surface(dataframe,element_x,element_y,element_z,title='Unn
 
 """********************     Dataframe functions    ********************"""
 
-def df_from_elements(file_route,index,rows,key_cols,elements):
+def df_from_xlsx_elements(file_route,index,rows,key_cols,elements):
     # Returns a dataframe containing all data passed as 'elements' structured following
     # 'key_cols'. Additionally, an index and number of rows has to be added.
     # Note that the dataframe is generated from an excel
@@ -529,7 +529,7 @@ def df_from_elements(file_route,index,rows,key_cols,elements):
 
     return custom_df
 
-def df_from_vehicle(file_route, search_object, index='VIN', check_columns=['Id', 'Timestamp']):
+def df_from_xlsx_vehicle(file_route, rack_number, index='VIN', check_columns=['Id', 'Timestamp']):
     # Read and save the xlsx file in 'excel' variable
     excel = pd.ExcelFile(file_route)
 
@@ -540,23 +540,63 @@ def df_from_vehicle(file_route, search_object, index='VIN', check_columns=['Id',
         custom_df[element] = None
     custom_df.set_index(index, inplace=True)
 
-    num_check_columns = len(check_columns)
-
     for sheet in excel.sheet_names:
-        #if sheet!="Resumen":
         df = pd.read_excel(file_route, sheet_name=sheet, index_col=index)
 
         # Check if sheet has all key columns
         if all(col in df.columns for col in check_columns):
-            if search_object in df.index:
-                fila = df.loc[search_object]
+            if rack_number in df.index:
+                fila = df.loc[rack_number]
                 custom_df = pd.merge(custom_df, fila, on=check_columns, how='right')
                 custom_df = custom_df.dropna(axis=1)
 
     return custom_df
 
+def df_from_parquet_elements(file_path:str,elements:tuple, samples:int=None) -> pd.DataFrame:
+    # Read and save the data file (.parquet) into a dataframe. If the file_path is not found,
+    # return -1
+    if not os.path.exists(file_path):
+        return -1
+    df = pd.read_parquet(file_path)
 
-def df_get_elements_tag(dataframe):
+    # Checks if all elements requested are contained in the original file
+    if not (all(column in df.columns for column in elements)):
+        return -1
+    
+    # Copy desired columns onto custom_df. If samples is None, that means that all rows need
+    # to be copied. Only "samples" number of rows copied if otherwise.
+    if samples == None: 
+        custom_df = df[elements].copy()
+    else:
+        custom_df = df[elements][:samples].copy()
+    
+    return custom_df
+
+def df_from_parquet_vehicle(file_path:str, rack_number:int) -> pd.DataFrame:
+    # This function generates a dataframe which will contain all columns given a rack_number
+    # from an already existing dataframe (which contains all data from all vehicles). The file
+    # path of the data source has to be passed as parameter and it has to lead to a .parquet file
+    # 
+    # INPUTS:
+    #   - file_path: relative path to the parquet file
+    #   - rack_number: VIN of vehicle needed to plot
+    # 
+    # OUTPUT:
+    #   - -1 in case the file path is not correct
+    #   - custom_df: df containing all data of VIN's vehicle
+    
+    # Read and save the data file (.parquet) into a dataframe. If the file_path is not found,
+    # return -1
+    if not os.path.exists(file_path):
+        return -1
+    df = pd.read_parquet(file_path)
+    
+    # Filter by rack_number, which in this case, is the index of the dataframe
+    custom_df = df.loc[rack_number]
+
+    return custom_df
+
+def df_get_elements_tag(dataframe:pd.DataFrame):
     # This vector returns a vector containing all names of all columns and the name
     # of the index in case there is one given a dataframe dataframe
     # 
@@ -591,8 +631,6 @@ def df_check_user_values(usr_dataframe):
     #   - result:Devuelve True si todos los valores están dentro de los rangos, y False si al menos un valor está fuera de los rangos o si hay elementos no encontrados en el archivo JSON.
     #elements_check: Un diccionario que contiene información detallada sobre la verificación de cada elemento. Para cada elemento, se almacenan los resultados de la verificación mínima (Check_min), la verificación máxima (Check_max).Este diccionario proporciona detalles sobre qué valores no cumplen con los criterios de verificación.
     
-    
-
     with open('param_batery.json', 'r') as archivo:
         dict_param = json.load(archivo)
 
@@ -623,10 +661,9 @@ def df_check_user_values(usr_dataframe):
     return result, elements_check
 
 
-"""********************     Parquet Files funcitons    ********************"""
-    
+"""********************     Parquet Files functions    ********************"""
 
-def df_generate_month(file_path:str,type_name:str,year:int,month:int) -> pd.DataFrame:
+def df_generate_month_df(file_path:str,type_name:str,year:int,month:int) -> pd.DataFrame:
     # Given a month and year, generates a dataframe containing all "data_to_save" information
     # which will be further (in another function) appended to the parquet file that contains
     # all months.
@@ -647,7 +684,7 @@ def df_generate_month(file_path:str,type_name:str,year:int,month:int) -> pd.Data
     MONTHLY_DATA_TRIP = ['Mins','Max speed','Total (km)','Total energy (Wh)','Inv  min T (°C)']
     MONTHLY_DATA_CHARGE = ['Min temp I','Max temp I']
 
-    df = pq.read_parquet(file_path)
+    df = pd.read_parquet(file_path)
 
     if type_name == 'trip':
         # Generate a new dataframe containing the necessary columns from both vectors    
@@ -657,7 +694,7 @@ def df_generate_month(file_path:str,type_name:str,year:int,month:int) -> pd.Data
         
         # Add to the dataframe all columns to be stored. Note that the value saved is
         # the average 
-        mean_trip = df[MONTHLY_DATA_TRIP].mean()
+        mean_trip = pd.DataFrame(df[MONTHLY_DATA_TRIP].mean()).transpose()
         df_month[MONTHLY_DATA_TRIP] = mean_trip
 
     elif type_name == 'charge':
@@ -681,7 +718,110 @@ def df_generate_month(file_path:str,type_name:str,year:int,month:int) -> pd.Data
 
     return df_month
 
-def df_generate_from_months(num_months:int) -> pd.DataFrame:
+def df_add_df_to_parquet_file(file_path:str,df_new:pd.DataFrame) -> pd.DataFrame:
+    # This function will generate and modify a new .parquet given a filename
+    # and dataframe to ba added.
+    # 
+    # This function is internally used to generate/edit the trip, charge and critical
+    # data files. In case there is no file created and placed into the df directory,
+    # a new file is created. Plus, if there is no df/ directory, a new folder is created
+    # in order to store subsequent data
+    # 
+    # INPUT:
+    #   - file_path
+    #   - df_new: dataframe containing new data to be stored
+    # 
+    # OUTPUT:
+    #   - Resulting dataframe
+    
+    # If file exists
+    if os.path.exists(file_path):
+        # Read and add new data. Then deletes any duplicated rows
+        # before overwriting the .parquet file
+        df_exist = pd.read_parquet(file_path)
+        df_final = pd.concat([df_exist,df_new])
+
+        # Erase possible duplicates and sort rows by ascending date
+        df_final.drop_duplicates(subset='Date',keep='last',inplace=True)
+        df_final.sort_values(by='Date',ascending=True,inplace=True)
+
+        # Overwrite file
+        table = pa.Table.from_pandas(df_final)
+        pq.write_table(table,file_path)
+       
+        return df_final
+
+    # If file does not exist, check if there's a folder to add
+    # the new file. If there is not any directory, create one
+    if not (os.path.exists('df') and os.path.isdir('df')):
+       os.makedirs('df')
+
+    # Generate the new file
+    table = pa.Table.from_pandas(df_new)
+    pq.write_table(table,file_path)
+    
+    return df_new
+
+def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
+
+    timestamp_max=df_new['Timestamp'].max()
+    date_max=datetime.datetime.utcfromtimestamp(timestamp_max)
+    year_max=date_max.year
+    month_max=date_max.month
+    timestamp_min=df_new['Timestamp'].min()
+    date_min=datetime.datetime.utcfromtimestamp(timestamp_min)
+    year_min=date_min.year
+    month_min=date_min.month
+
+    
+    #All the data are from the same month
+    if month_min == month_max:
+        filename=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
+        df_add_df_to_parquet_file(filename,df_new)
+        return df_new
+    
+    #Data are from the different month
+    if month_min != month_max:
+        df_new_month = pd.DataFrame()
+        for index, row_data in df_new.iterrows():
+            # Get the timestamp corresponding to the start of the new month
+            start_of_month = np.datetime64(f'{year_max}-{month_max:02}-01T00:00:00')
+            start_of_month_timestamp = start_of_month.astype(np.int64)
+            # Compare if the row corresponds to this or previous month
+            if row_data['Timestamp']> start_of_month_timestamp:
+                aux_df = pd.DataFrame(row_data).transpose()
+                df_new_month = pd.concat([df_new_month,aux_df])
+                # Delete this column (cannot use index since it will delete all rows with same index)
+                df_new = df_new[~((df_new['Timestamp'] == row_data['Timestamp']) & (df_new.index == index))]
+        
+        filename_new_month=f'df/{year_max}_{month_max:02}_{type_name}.parquet'
+        df_add_df_to_parquet_file(filename_new_month,df_new_month)
+
+        filename_last_month=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
+        df_add_df_to_parquet_file(filename_last_month,df_new)
+
+        return df_new_month
+    
+def df_add_month_to_critical_data(df_file_path:str, type_name:str, year:int, month:int) -> pd.DataFrame:
+    # This function will either create critical_data.parquet and add this 
+    # month's critical data or just add the critical data to an existing file
+    # 
+    # INPUT:
+    #   - df_file_path: relative path to the .parquet file that contains the month's
+    #                   data
+    # 
+    # OUTPUT:
+    #   - new_month_df: dataframe that has been stored into a .parquet file
+    
+    # Check if there's any months.parquet file, if not, return -1
+    MONTHS_FILE_PATH = 'df/critical_data.parquet'
+    month_df = df_generate_month_df(df_file_path,type_name,year,month)
+
+    new_month_df = df_add_df_to_parquet_file(MONTHS_FILE_PATH,month_df)
+
+    return new_month_df
+
+def df_get_last_months_critical_data(num_months:int) -> pd.DataFrame:
     # Returns a dataframe containing the critical data stored in month.parquet.
     # The number of columns will be fixed by "num_columns" so that if the last
     # x months are requestet. A dataframe containing the last x months will be
@@ -701,112 +841,21 @@ def df_generate_from_months(num_months:int) -> pd.DataFrame:
     aux_df = pd.read_parquet(MONTHS_FILE_PATH)
 
     # Get the last "num_months" columns from the critical data file
-    last_months_df = aux_df.tail(num_months)
+    # It checks whether num_months is greater than the number of rows available
+    # to avoid errors
+    last_months_df = aux_df.tail(min(num_months,aux_df.shape[0]))
 
     return last_months_df
 
-def df_add_month_df(df_new,df_vector=None):
-    # This function will add a new month's dataframe to a previously existing dataframe vector,
-    # if none df_vector is passed, it is assumed that it is the first month dataframe to be created
-    # and thus, a new dataframe vector is created
-    # 
-    # INPUT:
-    #   - df_new: new month's dataframe
-    #   - df_vector: preexsisting vector of month_df, if None, a new vector will be created
-    # 
-    # OUTPUT:
-    #   - df_vector with df_new concatenated
-
-    if df_vector == None:
-        df_vector=[]
-    df_vector.append(df_new)
-    return df_vector
-
-def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
-
-    timestamp_max=df_new['Timestamp'].max()
-    date_max=datetime.datetime.utcfromtimestamp(timestamp_max)
-    year_max=date_max.year
-    month_max=date_max.month
-    timestamp_min=df_new['Timestamp'].min()
-    date_min=datetime.datetime.utcfromtimestamp(timestamp_min)
-    year_min=date_min.year
-    month_min=date_min.month
-
-    
-    #All the data are from the same month
-    if month_min == month_max:
-        filename=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
-        df_add_df_file(filename,df_new)
-        return df_new
-    
-    #Data are from the different month
-    if month_min != month_max:
-        for index, row_data in df_new.iterrows():
-            if row_data['Timestamp']> np.datetime64(f'{year_max}-{month_max:02}-01T00:00:00'):
-                df_new_month=df_new_month.append(df_new.loc[index])
-                df_new=df_new.drop(index)
-        
-        filename_new_month=f'df/{year_max}_{month_max:02}_{type_name}.parquet'
-        df_add_df_file(filename_new_month,df_new_month)
-
-        filename_last_month=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
-        df_add_df_file(filename_last_month,df_new)
-
-        return df_new_month
-    
-def df_add_to_month(month_df) -> pd.DataFrame:
-    # This function will either create critical_data.parquet and add this 
-    # month's critical data or just add the critical data to an existing file
-    # 
-    # INPUT:
-    #   - month_df: new month's dataframe
-    # 
-    # OUTPUT:
-    #   - new_month_df: dataframe that has been stored into a .parquet file
-    
-    # Check if there's any months.parquet file, if not, return -1
-    MONTHS_FILE_PATH = 'df/critical_data.parquet'
-    if not os.path.exists(MONTHS_FILE_PATH):
-        new_month_df = df_generate_month()
-    
-    new_month_df = pd.read_parquet(MONTHS_FILE_PATH)
-    
-    return new_month_df
-
-def df_add_df_file(file_path:str,df_new:pd.DataFrame) -> pd.DataFrame:
-    # This function will generate and modify a new .parquet given a filename
-    # and dataframe to ba added.
-    # 
-    # This function has to be used to modify data related to 'run' and 'charge'
-    # files. To do so with the monthly critical data, use df_add_to_month_df()
-    # 
-    # INPUT:
-    #   - file_path
-    #   - df_new: dataframe containing new data to be stored
-    # 
-    # OUTPUT:
-    #   - Resulting dataframe
-    
-    # If file exists
-    if os.path.exist(file_path):
-        # Read and add new data
-        df_exist = pd.read_parquet(file_path)
-        df_final = pd.concat([df_exist,df_new])
-        # Overwrite file
-        table = pa.Table.from_pandas(df_final)
-        pq.write_table(table,file_path)
-       
-        return df_final
-
-    # If file does not exist, generate a new one from df_new
-    table = pa.Table.from_pandas(df_new)
-    pq.write_table(table,file_path)
-    
-    return df_new
-
-
 def df_get_columns_tag(dataframe):
+    # Given a dataframe, this function can be used to get all the columns' name
+    # in a tuple
+    # 
+    # INPUTS:
+    #   - dataframe
+    # 
+    # OUTPUT:
+    #   - tag_vector
 
     tag_vector = []
     for columna in dataframe.columns:
