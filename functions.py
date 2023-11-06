@@ -762,7 +762,7 @@ def df_add_df_to_parquet_file(file_path:str,df_new:pd.DataFrame) -> pd.DataFrame
     
     return df_new
 
-def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
+def df_append_data(df_new:pd.DataFrame, type_name:str) -> int:
 
     timestamp_max=df_new['Timestamp'].max()
     date_max=datetime.datetime.utcfromtimestamp(timestamp_max)
@@ -773,22 +773,23 @@ def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
     year_min=date_min.year
     month_min=date_min.month
 
+     # Get the timestamp corresponding to the start of the new month
+    START_OF_MONTH = np.datetime64(f'{year_max}-{month_max:02}-01T00:00:00')
+    START_OF_MONTH_TIMESTAMP = START_OF_MONTH.astype(np.int64)
     
     #All the data are from the same month
     if month_min == month_max:
         filename=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
         df_add_df_to_parquet_file(filename,df_new)
-        return df_new
     
     #Data are from the different month
-    if month_min != month_max:
+    else:
         df_new_month = pd.DataFrame()
         for index, row_data in df_new.iterrows():
             # Get the timestamp corresponding to the start of the new month
-            start_of_month = np.datetime64(f'{year_max}-{month_max:02}-01T00:00:00')
-            start_of_month_timestamp = start_of_month.astype(np.int64)
+
             # Compare if the row corresponds to this or previous month
-            if row_data['Timestamp']> start_of_month_timestamp:
+            if row_data['Timestamp']> START_OF_MONTH_TIMESTAMP:
                 aux_df = pd.DataFrame(row_data).transpose()
                 df_new_month = pd.concat([df_new_month,aux_df])
                 # Delete this column (cannot use index since it will delete all rows with same index)
@@ -799,8 +800,15 @@ def df_append_data(df_new:pd.DataFrame, type_name:str) -> pd.DataFrame:
 
         filename_last_month=f'df/{year_min}_{month_min:02}_{type_name}.parquet'
         df_add_df_to_parquet_file(filename_last_month,df_new)
+        
 
-        return df_new_month
+    
+    if timestamp_min < START_OF_MONTH_TIMESTAMP:
+        if month_min == 1:
+            df_add_month_to_critical_data(filename_last_month,type_name, year_min-1, 12)
+        else:
+            df_add_month_to_critical_data(filename_last_month,type_name, year_min, month_min)
+    return 0
     
 def df_add_month_to_critical_data(df_file_path:str, type_name:str, year:int, month:int) -> pd.DataFrame:
     # This function will either create critical_data.parquet and add this 
