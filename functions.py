@@ -862,3 +862,42 @@ def df_get_columns_tag(dataframe):
         tag_vector.append(columna)
 
     return tag_vector
+
+def resolution(df,type_name:str):
+    
+    # Nombres de las columnas ordenadas por resolución
+    Route_resolution01 = ["End odometer", "City (km)","Sport (km)","Flow (km)","Sail (km)","Regen (km)","Motor avg T (°C)","Thermal current","Max temp","Min temp","Max delta","Avg delta"]
+    Route_resolution001 = ["Regen (%)", "Start SoC ","End SoC ","SoC delta (%)","Avg temp"]
+    Route_resolution0001 = ["Max discharge ", "Max regen","Avg current","Max V","Average V","Min V","Max cell V","Min cell V","Cell V diff","Min temp","Avg delta"]
+    Load_resolution01 = ["Max charger current","Min temp I","Max temp I","Min temp F","Max temp F","Min temp","Max temp","Cycles","Max temp","Min temp"]
+    Load_resolution001 = ["SoC i", "SoC f","Charger max P","Avg temp I","Avg temp F","Age","uSoC I","uSoC F"]
+    Load_resolution0001 = ["Vmin I", "Vavg I","Vmax I","Vmin F","Delta V I","Avg final V","Max final V","Max BMS current","Min temp"]
+
+    if type_name=="Route":
+    # Iterar sobre las columnas y multiplicarlas por el factor 0,1 (Route)
+        for parameter in Route_resolution01:
+            df[parameter] = df[parameter] * 0.1
+        
+        # Iterar sobre las columnas y multiplicarlas por el factor 0,01 (Route)
+        for parameter in Route_resolution001:
+            df[parameter] = df[parameter] * 0.01
+
+        # Iterar sobre las columnas y multiplicarlas por el factor 0,001 (Route)
+        for parameter in Route_resolution0001:
+            df[parameter] = df[parameter] * 0.001
+
+    if type_name=="Load":
+        # Iterar sobre las columnas y multiplicarlas por el factor 0,1 (Load)
+        for parameter in Load_resolution01:
+            df[parameter] = df[parameter] * 0.1
+        
+        # Iterar sobre las columnas y multiplicarlas por el factor 0,01 (Load)
+        for parameter in Load_resolution001:
+            df[parameter] = df[parameter] * 0.01
+
+        # Iterar sobre las columnas y multiplicarlas por el factor 0,001 (Load)
+        for parameter in Load_resolution0001:
+            df[parameter] = df[parameter] * 0.001
+
+    return df
+
