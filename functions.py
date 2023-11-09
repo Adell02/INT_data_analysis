@@ -119,7 +119,7 @@ def trace_scatter_plot(dataframe,element_x,elements_y,reg_line=False):
     trace_vector=[]          # This vector will contain all traces, one for each element_y
     
     # We have to differentiate if elements_y is a vector or a string, because the for loop won't
-    # act as intended if elements_y contains one single element
+    # act as intended if elements_y contains one single string
     if isinstance(elements_y,str):
         trace = go.Scatter(
             x=dataframe[element_x],
@@ -260,6 +260,10 @@ def generate_multi_histogram(dataframe,elements,units='',start=-200,end=200,step
         bargroupgap=0.1 # gap between bars of the same location coordinates
     )
 
+    # Add legend and display it in the top-right corner of the graph
+    fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
+
+
     return fig
 
 def generate_scatter_plot(dataframe,element_x,elements_y,title='Unnamed Scatter Plot',reg_line=False):
@@ -289,6 +293,9 @@ def generate_scatter_plot(dataframe,element_x,elements_y,title='Unnamed Scatter 
 
     # From all traces, we generate the figure
     fig = go.Figure(data=data_vector,layout=layout)
+
+    # Add legend and display it in the top-right corner of the graph
+    fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
 
     return fig
 
@@ -348,6 +355,9 @@ def generate_scatter_plot_user(dataframe,key_user,element_x,elements_y,title="Un
     x_min = user_df[element_x].min() 
     fig.update_xaxes(range=[x_min,x_max])
 
+    # Add legend and display it in the top-right corner of the graph
+    fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
+
 
     return fig
 
@@ -381,6 +391,9 @@ def generate_bar_chart(dataframe,element_x,elements_y,title='Unnamed Bar Chart')
         xaxis_title = element_x,
         barmode = 'group'               #Options available: group, stack, relative
     )
+
+    # Add legend and display it in the top-right corner of the graph
+    fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
     
     return fig
 
@@ -520,19 +533,28 @@ def df_from_xlsx_vehicle(file_route, rack_number, index='VIN', check_columns=['I
 
     return custom_df
 
-def df_from_parquet_elements(file_path:str,elements:tuple, samples:int=None) -> pd.DataFrame:
+def df_from_parquet_elements(file_path:str,elements:tuple=None, samples:int=None) -> pd.DataFrame:
     # Read and save the data file (.parquet) into a dataframe. If the file_path is not found,
     # return -1
     if not os.path.exists(file_path):
         return -1
     df = pd.read_parquet(file_path)
+    
+    # Copy desired columns onto custom_df. If samples is None, that means that all rows need
+    # to be copied. Only "samples" number of rows copied if otherwise.
+    if elements == None:
+        if samples == None:
+            return df
+        custom_df = df[:samples].copy()
+        return custom_df
+    
+    # If we get to this point, elements is a tuple and we have to copy only the columns passed as
+    # parameter
 
     # Checks if all elements requested are contained in the original file
     if not (all(column in df.columns for column in elements)):
         return -1
     
-    # Copy desired columns onto custom_df. If samples is None, that means that all rows need
-    # to be copied. Only "samples" number of rows copied if otherwise.
     if samples == None: 
         custom_df = df[elements].copy()
     else:
