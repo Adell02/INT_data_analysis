@@ -1,0 +1,131 @@
+[
+    {
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Trip Distance",
+        "elements": "Total distance",
+        "units" : "km"
+        
+    },{ 
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Trip duration",
+        "elements": ["Mins"],
+        "units" : "minutes"
+        
+    },{
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Odometer Distribution",
+        "elements": "End odometer",
+        "units" : "k km"
+        
+    },{
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Motor Temperatures",
+        "elements": ["Motor min T","Motor avg T","Motor max T"],
+        "units" : "ºC"
+        
+    },{ 
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Inverter Temperatures",
+        "elements": ["Inv min T","Inv avg T","Inv max T"],
+        "units" : "ºC"
+        
+    },{
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "SoC Distribution",
+        "elements": ["Start SoC","End SoC"],
+        "units" : "%"
+        
+    },{ 
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Cell Voltages",
+        "elements": ["Min cell V", "Max cell V"],
+        "units" : "V"
+        
+    },{ 
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Cell Temperatures",
+        "elements": ["Min battery temp", "Max battery temp"],
+        "units" : "ºC"
+        
+    },{ 
+        "function": "generate_multi_histogram",
+        "parameters": ["dataframe","title","elements","units"],
+        "title": "Charging SoC",
+        "elements": ["SoC initial","SoC final"],
+        "units" : "%"
+        
+    },
+
+
+    { 
+        "function": "generate_pie_chart",
+        "parameters": ["dataframe","title","elements"],
+        "title": "Modos de Conducción por km",
+        "elements": ["City distance","Sport distance","Flow distance"]
+        
+    },{ 
+        "function": "generate_pie_chart",
+        "parameters": ["dataframe","title","elements"],
+        "title": "Regeneración y Sail por km",
+        "elements": ["Sail distance","Regen distance"]
+        
+    },{ 
+        "function": "generate_pie_chart",
+        "parameters": ["dataframe","title","elements"],
+        "title": "Modos de Conducción por Wh",
+        "elements": ["City energy","Sport energy","Flow energy"]
+        
+    },{ 
+        "function": "generate_pie_chart",
+        "parameters": ["dataframe","title","elements"],
+        "title": "Regeneración y Sail por Wh",
+        "elements": ["City Regen","Sport Regen"]
+        
+    },
+    
+    
+    { 
+        "function": "generate_scatter_plot_user",
+        "parameters": ["dataframe","title","column_x","columns_y","user","user_reg_line","reg_line"],
+        "title": "Comparación usuario: Tensiones de celda vs Odometro",
+        "element_x": ["End odometer"],
+        "elements_y": ["Max cell V","Min cell V"],
+        "key_user": "",
+        "user_reg_line":"False",
+        "reg_line": "True"
+        
+    },
+    
+    
+    { 
+        "function": "get_consumption_vs_temp",
+        "parameters": ["df"]
+        
+    },{ 
+        "function": "inv_min_t_vs_cell_min_t_vs_total_energy",
+        "parameters": ["df"]
+        
+    },{ 
+        "function": "delta_soc_vs_inv_min_temp",
+        "parameters": ["df"]
+        
+    },{ 
+        "function": "mode_energy_vs_kilometers",
+        "parameters": ["df"]
+        
+    },{ 
+        "function": "delta_SoC_vs_Total_Energy",
+        "parameters": ["df"]
+        
+    }    
+]
+
+   
