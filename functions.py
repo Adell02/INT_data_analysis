@@ -377,6 +377,9 @@ def generate_line_chart(dataframe,element_x,elements_y,title='Unnamed Line Chart
 
     # From all traces, we generate the figure
     fig = go.Figure(data=trace_vector,layout=layout)
+
+    # Add legend and display it in the top-right corner of the graph
+    fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
     
     return fig
 
@@ -899,3 +902,42 @@ def resolution(df,type_name:str):
 
     return df
 
+def df_update_column_tags(file_path:str,type_name:str) -> int:
+    
+    # Check if file_path is correct
+    if not os.path.exists(file_path):
+        return -1
+    df = pd.read_parquet(file_path)
+
+    # Check type_name and update the column tags
+    if type_name == 'trip':
+        column_tags_trip = [
+            "Timestamp", "Id", "Start", "End", "Mins", "End odometer",
+            "Max speed", "City distance", "Sport distance", "Flow distance", "Sail distance",
+            "Regen distance", "Total distance", "City energy", "Sport energy", "Flow energy",
+            "City regen", "Sport regen", "Map changes", "Total energy", "Total regen",
+            "Regen percentage", "Inv max T", "Inv avg T", "Inv min T", "Motor max T", "Motor avg T",
+            "Motor min T", "Start SoC", "End SoC", "Max discharge", "Max regen", "SoC delta",
+            "Avg current", "Thermal current", "Max battery V", "Avg battery V", "Min battery V",
+            "Max cell V", "Min cell V", "Cell V diff", "Max battery temp", "Avg battery temp",
+            "Min battery temp", "Max battery delta", "Avg delta", "Temp general delta"
+        ]
+
+        df.columns = column_tags_trip
+        return 0
+    
+    if type_name == 'charge':
+
+        column_tags_charge = [
+            "SoC initial", "SoC final", "Vmin initial", "Vavg initial", "Vmax initial",
+            "Vmin final", "Delta V initial", "Avg final V", "Max final V", "Max BMS current",
+            "Max charger current", "Charger max P", "Min temp initial", "Avg temp initial",
+            "Max temp initial", "Min temp final", "Avg temp final", "Max temp final",
+            "Min temp absolute", "Max temp absolute", "Cycles", "Age", "uSoC initial",
+            "uSoC final", "Connector"
+        ]
+
+        df.columns = column_tags_charge
+        return 0
+
+    return -1
