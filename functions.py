@@ -168,6 +168,19 @@ def trace_bar_chart(dataframe,element_x,elements_y):
     
     return trace_vector
 
+def trace_box_plot(dataframe:pd.DataFrame,elements):
+# Generates a trace to be added to a box plot
+
+    trace_vector = []
+    # Check if elements is a string or a tuple
+    if isinstance(elements,str):
+        trace_vector.append(go.Box(y=dataframe[elements],name=elements))
+
+    else:
+        for element in elements:
+            trace_vector.append(go.Box(y=dataframe[element],name=element))
+    
+    return trace_vector
 
 """********************     Figures generation    ********************"""
 
@@ -440,6 +453,25 @@ def generate_response_surface(dataframe,element_x,element_y,element_z,title='Unn
         aspectmode = 'cube'
     ))
     return fig
+
+def generate_box_plot(dataframe:pd.DataFrame,elements,title='Unamed Box Plot'):
+    # Generate a box plot given a dataframe and the elements to be plotted
+    # INPUTS:
+    #   - dataframe
+    #   - elements
+    #   - title
+    # OUTPUT:
+    #   - figure
+    trace_vector = trace_box_plot(dataframe,elements)
+
+    layout = go.Layout(title = title)
+    fig = go.Figure(data=trace_vector,layout=layout)
+
+    # Add legend and display it in the top-right corner of the graph
+    fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
+
+    return fig
+
 
 """********************     Dataframe functions    ********************"""
 
