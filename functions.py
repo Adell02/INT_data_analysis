@@ -315,6 +315,7 @@ def generate_scatter_plot(dataframe,element_x,elements_y,title='Unnamed Scatter 
 
     # Add legend and display it in the top-right corner of the graph
     fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
+    fig.update_traces(marker=dict(size=3))
 
     return fig
 
@@ -376,6 +377,7 @@ def generate_scatter_plot_user(dataframe,key_user,element_x,elements_y,title="Un
 
     # Add legend and display it in the top-right corner of the graph
     fig.update_layout(showlegend=True, legend=dict(x=0.85, y=0.95, traceorder='normal', orientation='v'))
+    fig.update_traces(marker=dict(size=3))
 
 
     return fig
@@ -700,7 +702,7 @@ def load_parameters_from_json():
     return data["parameters"]
 
 
-def verify_values_in_range(file_path):
+def df_verify_values_in_range(file_path):
    
     if not os.path.exists(file_path):
         return -1
@@ -714,7 +716,8 @@ def verify_values_in_range(file_path):
 
         condicion = (dataframe[column] >= value_min) & (dataframe[column] <= value_max)
         dataframe = dataframe.loc[condicion]
-
+        if dataframe.empty:
+            print("empty")
     # Generate the new file
     table = pa.Table.from_pandas(dataframe)
     pq.write_table(table,file_path)
