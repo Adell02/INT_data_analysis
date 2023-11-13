@@ -1,0 +1,431 @@
+{
+    "parameters": {
+      "VIN": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 17,
+        "Value_MIN": 17,
+        "Units": " "
+      },
+      "Timestamp": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1690847896,
+        "Value_MIN": 1687919697,
+        "Units": "s"
+      },
+      "Id": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 99,
+        "Value_MIN": 1,
+        "Units": " "
+      },
+      "Start": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1690847502,
+        "Value_MIN": 1679432385,
+        "Units": "s"
+      },
+      "End": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1690847895,
+        "Value_MIN": 1685604889,
+        "Units": "s"
+      },
+      "Mins": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 220,
+        "Value_MIN": 0,
+        "Units": "Mins"
+      },
+      "End odometer": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 352950,
+        "Value_MIN": 0,
+        "Units": "Km"
+      },
+      "Max speed": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 2000,
+        "Value_MIN": 0,
+        "Units": "Km/h"
+      },
+      "City distance": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1100,
+        "Value_MIN": 0,
+        "Units": "Km"
+      },
+      "Sport distance": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 800,
+        "Value_MIN": 0,
+        "Units": "Km"
+      },
+      "Flow distance": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1100,
+        "Value_MIN": 0,
+        "Units": "Km"
+      },
+      "Sail distance": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 250,
+        "Value_MIN": 0,
+        "Units": "Km"
+      },
+      "Regen distance": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 180,
+        "Value_MIN": 0,
+        "Units": "Km"
+      },
+      "Total distance": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 150,
+        "Value_MIN": 0,
+        "Units": "Km"
+      },
+      "City energy": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 5500,
+        "Value_MIN": 0,
+        "Units": "Wh"
+      },
+      "Sport energy": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 6400,
+        "Value_MIN": 0,
+        "Units": "Wh"
+      },
+      "Flow energy": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 6260,
+        "Value_MIN": 0,
+        "Units": "Wh"
+      },
+      "City regen": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 630,
+        "Value_MIN": 0,
+        "Units": "Wh"
+      },
+      "Sport regen": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 450,
+        "Value_MIN": 0,
+        "Units": "Wh"
+      },
+      "Map changes": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 10,
+        "Value_MIN": 0,
+        "Units": " "
+      },
+      "Total energy": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 6600,
+        "Value_MIN": 0,
+        "Units": "Wh"
+      },
+      "Total regen": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 700,
+        "Value_MIN": 0,
+        "Units": "Wh"
+      },
+      "Regen": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1300,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "Inv max T": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 84,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Inv avg T": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 802,
+        "Value_MIN": 0,
+        "Units": "ºdC"
+      },
+      "Inv  min T": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 75,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Motor max T": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 150,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Motor avg T": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1085,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Motor min T": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 105,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Start SoC": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 10000,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "End SoC": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 10000,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "Max discharge": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 7000,
+        "Value_MIN": -245600,
+        "Units": "A"
+      },
+      "Max regen": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 110000,
+        "Value_MIN": 0,
+        "Units": "A"
+      },
+      "SoC delta": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 100,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "Avg current": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 15000,
+        "Value_MIN": -100700,
+        "Units": "A"
+      },
+      "Thermal current": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 1500,
+        "Value_MIN": 0,
+        "Units": "A"
+      },
+      "Max V": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 7566199,
+        "Value_MIN": 0,
+        "Units": "V"
+      },
+      "Average V": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 10000000,
+        "Value_MIN": 78800,
+        "Units": "V"
+      },
+      "Min V": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 100000,
+        "Value_MIN": 23600,
+        "Units": "V"
+      },
+      "Max cell V": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 4320,
+        "Value_MIN": 190,
+        "Units": "V"
+      },
+      "Min cell V": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 4120,
+        "Value_MIN": 41,
+        "Units": "V"
+      },
+      "Cell V diff": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 860,
+        "Value_MIN": 0,
+        "Units": "V"
+      },
+      "Max temp": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 670,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Avg temp": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 5570,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Min temp": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 500,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Max delta": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 300,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Avg delta": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 260,
+        "Value_MIN": 0,
+        "Units": "ºC"
+      },
+      "Temp general delta": {
+        "Type Chart Variables": "route",
+        "Value_MAX": 55,
+        "Value_MIN": -12,
+        "Units": "ºC"
+      },
+      "SoC i": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 10000,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "SoC f": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 10000,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "Vmin I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 4200,
+        "Value_MIN": 2600,
+        "Units": "V"
+      },
+      "Vavg I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 4200,
+        "Value_MIN": 2900,
+        "Units": "V"
+      },
+      "Vmax I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 4200,
+        "Value_MIN": 3100,
+        "Units": "V"
+      },
+      "Vmin F": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 4200,
+        "Value_MIN": 3300,
+        "Units": "V"
+      },
+      "Delta V I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 960,
+        "Value_MIN": 3,
+        "Units": "V"
+      },
+      "Avg final V": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 4200,
+        "Value_MIN": 3380,
+        "Units": "V"
+      },
+      "Max final V": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 4210,
+        "Value_MIN": 3990,
+        "Units": "V"
+      },
+      "Max BMS current": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 45420,
+        "Value_MIN": 0,
+        "Units": "A"
+      },
+      "Max charger current": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 58860,
+        "Value_MIN": 0,
+        "Units": "A"
+      },
+      "Charger max P": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 340020,
+        "Value_MIN": 0,
+        "Units": "W"
+      },
+      "Min temp I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 550,
+        "Value_MIN": 120,
+        "Units": "ºC"
+      },
+      "Avg temp I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 5720,
+        "Value_MIN": 1520,
+        "Units": "ºC"
+      },
+      "Max temp I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 625,
+        "Value_MIN": 150,
+        "Units": "ºC"
+      },
+      "Min temp F": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 525,
+        "Value_MIN": 150,
+        "Units": "ºC"
+      },
+      "Avg temp F": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 6000,
+        "Value_MIN": 1120,
+        "Units": "ºC"
+      },
+      "Max temp F": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 610,
+        "Value_MIN": 170,
+        "Units": "ºC"
+      },
+
+      "Cycles": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 635,
+        "Value_MIN": 0,
+        "Units": " "
+      },
+      "Age": {
+        "Type Chart Variables": "load",
+        "Value_MAX": null,
+        "Value_MIN": null,
+        "Units": " "
+      },
+      "uSoC I": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 10000,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "uSoC F": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 10000,
+        "Value_MIN": 0,
+        "Units": "%"
+      },
+      "Connector": {
+        "Type Chart Variables": "load",
+        "Value_MAX": 1,
+        "Value_MIN": 0,
+        "Units": " "
+      }
+    }
+  }
