@@ -614,7 +614,7 @@ def df_get_elements_tag(dataframe:pd.DataFrame):
         index = dataframe.index.name
 
     return index, tags_vector
-
+'''
 def df_check_user_values(usr_dataframe):
     # Load the JSON file
     #INPUT
@@ -624,15 +624,15 @@ def df_check_user_values(usr_dataframe):
     #   - result:Devuelve True si todos los valores están dentro de los rangos, y False si al menos un valor está fuera de los rangos o si hay elementos no encontrados en el archivo JSON.
     #elements_check: Un diccionario que contiene información detallada sobre la verificación de cada elemento. Para cada elemento, se almacenan los resultados de la verificación mínima (Check_min), la verificación máxima (Check_max).Este diccionario proporciona detalles sobre qué valores no cumplen con los criterios de verificación.
     
-    with open('param_batery.json', 'r') as archivo:
-        dict_param = json.load(archivo)
+    with open('param_batery.json', 'r') as file:
+        dict_param = json.load(file)
 
     result = True
     elements_check = {}
 
     for element in usr_dataframe.columns:
-        min_value = dict_param[element]['minimum']
-        max_value = dict_param[element]['maximum']
+        min_value = dict_param[element]['Value_MIN']
+        max_value = dict_param[element]['Value_MAX']
         
         check_min = True  # Initialize the verification variables
         check_max = True
@@ -652,7 +652,31 @@ def df_check_user_values(usr_dataframe):
             result = False
 
     return result, elements_check
+'''
 
+# Leer el archivo JSON con los valores máximos y mínimos
+def load_parameters_from_json():
+    with open('param_battery.json', 'r') as json_file:
+        data = json.load(json_file)
+    return data["parameters"]
+
+
+def verify_values_in_range(dataframe):
+
+    parametrs = load_parameters_from_json()
+
+    for index, row_data in dataframe.iterrows():
+        df_aux = pd.DataFrame(row_data).transpose()
+        for value in df_aux:
+                value_max = parametrs.get(value, {}).get("Value_MAX") #Si el campo no se encuentra, get() devuelve un diccionario vacío ({})
+                value_min = parametrs.get(value, {}).get("Value_MIN")
+                # if not (df_aux[value] < value_max).any() or not (df_aux[value] > value_min).any():
+                #     dataframe = dataframe[~((dataframe['Timestamp'] == row_data['Timestamp']) & (dataframe.index == index))]
+                #value_max = parametrs[value][]
+                if row_data[value] < value_max or row_data[value] > value_min:
+                    dataframe = dataframe[~((dataframe['Timestamp'] == row_data['Timestamp']) & (dataframe.index == index))]
+        
+    return dataframe
 
 """********************     Parquet Files functions    ********************"""
 
@@ -867,9 +891,9 @@ def df_get_columns_tag(dataframe):
 def resolution(df,type_name:str):
     
     # Nombres de las columnas ordenadas por resolución
-    Route_resolution01 = ["End odometer", "City (km)","Sport (km)","Flow (km)","Sail (km)","Regen (km)","Motor avg T (°C)","Thermal current","Max temp","Min temp","Max delta","Avg delta"]
-    Route_resolution001 = ["Regen (%)", "Start SoC ","End SoC ","SoC delta (%)","Avg temp"]
-    Route_resolution0001 = ["Max discharge ", "Max regen","Avg current","Max V","Average V","Min V","Max cell V","Min cell V","Cell V diff","Min temp","Avg delta"]
+    Route_resolution01 = ["End odometer", "City distance","Sport distance","Flow distance","Sail distance","Regen distance","Motor avg T","Thermal current","Max temp","Min temp","Max delta","Avg delta"]
+    Route_resolution001 = ["Regen", "Start SoC","End SoC","SoC delta","Avg temp"]
+    Route_resolution0001 = ["Max discharge", "Max regen","Avg current","Max V","Average V","Min V","Max cell V","Min cell V","Cell V diff","Min temp","Avg delta"]
     Load_resolution01 = ["Max charger current","Min temp I","Max temp I","Min temp F","Max temp F","Min temp","Max temp","Cycles","Max temp","Min temp"]
     Load_resolution001 = ["SoC i", "SoC f","Charger max P","Avg temp I","Avg temp F","Age","uSoC I","uSoC F"]
     Load_resolution0001 = ["Vmin I", "Vavg I","Vmax I","Vmin F","Delta V I","Avg final V","Max final V","Max BMS current","Min temp"]
@@ -911,31 +935,21 @@ def df_update_column_tags(file_path:str,type_name:str) -> int:
 
     # Check type_name and update the column tags
     if type_name == 'trip':
-        column_tags_trip = [
-            "Timestamp", "Id", "Start", "End", "Mins", "End odometer",
-            "Max speed", "City distance", "Sport distance", "Flow distance", "Sail distance",
-            "Regen distance", "Total distance", "City energy", "Sport energy", "Flow energy",
-            "City regen", "Sport regen", "Map changes", "Total energy", "Total regen",
-            "Regen percentage", "Inv max T", "Inv avg T", "Inv min T", "Motor max T", "Motor avg T",
-            "Motor min T", "Start SoC", "End SoC", "Max discharge", "Max regen", "SoC delta",
-            "Avg current", "Thermal current", "Max battery V", "Avg battery V", "Min battery V",
-            "Max cell V", "Min cell V", "Cell V diff", "Max battery temp", "Avg battery temp",
-            "Min battery temp", "Max battery delta", "Avg delta", "Temp general delta"
-        ]
+        column_tags_trip = ["Id","Start","End","Mins","End odometer","Max speed","City distance","Sport distance","Flow distance",
+                    "Sail distance","Regen distance","Total distance","City energy","Sport energy","Flow energy","City regen",
+                    "Sport regen","Map changes","Total energy","Total regen","Regen","Inv max T","Inv avg T","Inv  min T",
+                    "Motor max T","Motor avg T","Motor min T","Start SoC","End SoC","Max discharge","Max regen","SoC delta",
+                    "Avg current","Thermal current","Max V","Average V","Min V","Max cell V","Min cell V","Cell V diff","Max temp",
+                    "Avg temp","Min temp","Max delta","Avg delta","Temp general delta"]
 
         df.columns = column_tags_trip
         return 0
     
     if type_name == 'charge':
 
-        column_tags_charge = [
-            "SoC initial", "SoC final", "Vmin initial", "Vavg initial", "Vmax initial",
-            "Vmin final", "Delta V initial", "Avg final V", "Max final V", "Max BMS current",
-            "Max charger current", "Charger max P", "Min temp initial", "Avg temp initial",
-            "Max temp initial", "Min temp final", "Avg temp final", "Max temp final",
-            "Min temp absolute", "Max temp absolute", "Cycles", "Age", "uSoC initial",
-            "uSoC final", "Connector"
-        ]
+        column_tags_charge = ["SoC i","SoC f","Vmin I","Vavg I","Vmax I","Vmin F","Delta V I","Avg final V","Max final V","Max BMS current",
+                           "Max charger current","Charger max P","Min temp I","Avg temp I","Max temp I","Min temp F","Avg temp F",
+                           "Max temp F","Cycles","Age","uSoC I","uSoC F","Connector"]
 
         df.columns = column_tags_charge
         return 0
