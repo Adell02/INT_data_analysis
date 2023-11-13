@@ -10,7 +10,13 @@ from scipy import interpolate
 import pyarrow as pa
 import pyarrow.parquet as pq
 import datetime
-
+#Protocol Dictionary
+protocol_dict={"G1":["TS", "ST", "ET", "SO","JI"],"G2":["TS", "EO", "MS", "JI"],"C2":["TS", "CiD", "SpD","FlD","SD","RD","JI"],
+                   "C3":["TS", "CiCE", "SpCE","FlCE","CiRE","SpRE","MC","JI"],"IE":["TS", "+Ti", "ATi", "-Ti","+Te","ATe","-Te","JI"],
+                   "B1":["TS", "SB", "EB","MDI","MRI","JI"],"B2":["TS", "AI", "TI","+TV","JI"],"B3":["TS", "ATV", "-TV","+CV","-CV","JI"],
+                   "B4":["TS", "+CD", "+T","AT","-T","MDTB","ABTD","JI"],"H2":["TS", "Soc In", "SoC Fin","Mi IV","Av IV","Mx IV","Mi VF"],
+                   "H3":["TS", "Av FV", "Mx FV","Mx IBms","Mx I"], "H4":["TS", "MP", "Mi IT","Av IT","Mx IT","Mi FT"], 
+                   "H5":["TS", "ID", "Av FT","Mx FT","Mi AT","Mx AT","CN","BA"],"H8":["TS", "uSoc In", "uSoc Final","Charger Descriptor"]}
 
 
 """********************     Trace generation    ********************"""
@@ -616,6 +622,7 @@ def df_get_elements_tag(dataframe:pd.DataFrame):
     return index, tags_vector
 '''
 def df_check_user_values(usr_dataframe):
+
     # Load the JSON file
     #INPUT
     #usr_dataframe: Un DataFrame de pandas que contiene los datos que se van a verificar. Los nombres de las columnas del DataFrame representan los elementos cuyos valores se verificarán.
@@ -677,6 +684,185 @@ def verify_values_in_range(dataframe):
                     dataframe = dataframe[~((dataframe['Timestamp'] == row_data['Timestamp']) & (dataframe.index == index))]
         
     return dataframe
+
+def df_create(string:str, param_order)->pd.DataFrame:
+    # Split the string into its components
+    components = string.split(':')
+    payload = components[1]
+
+    # Check if the "End of Message Character" is present and remove it
+    if payload.endswith("#&"):
+        payload = payload[:-2]
+
+    # Split the payload into its parts
+    payload_parts = payload.split(',')
+    param_values = []
+
+    # Convert the values to integers or leave as None if they can't be converted
+    for part in payload_parts:
+        if part.isdigit():
+            param_values.append(int(part))
+        else:
+            param_values.append(None)
+
+    # Create a dictionary to store the parameter values
+    param_dict = {param: [value] for param, value in zip(param_order, param_values)}
+
+    # Create a DataFrame from the dictionary
+    df = pd.DataFrame(param_dict)
+
+    return df
+
+def df_from_string_to_df(string:str)-> (pd.DataFrame,str):
+
+    
+    components = string.split(':')
+    message_type = components[0][1:]
+    type_name=check_type(message_type)
+
+    if message_type == 'G1':
+        param_order = protocol_dict["G1"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'G2':
+        param_order = protocol_dict["G2"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'C2':
+        param_order = protocol_dict["C2"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'C3':
+        param_order = protocol_dict["C3"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'IE':
+        param_order = protocol_dict["IE"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'B1':
+        param_order = protocol_dict["B1"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'B2':
+        param_order = protocol_dict["B2"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'B3':
+        param_order = protocol_dict["B3"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'B4':
+        param_order = protocol_dict["B4"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'H2':
+        param_order = protocol_dict["H2"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'H3':
+        param_order = protocol_dict["H3"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'H4':
+        param_order = protocol_dict["H4"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'H5':
+        param_order = protocol_dict["H5"]
+        df_str=df_create(string, param_order)
+    elif message_type == 'H8':
+        param_order = protocol_dict["H8"]
+        df_str=df_create(string, param_order)
+    
+    return df_str , type_name
+
+def check_type(string:str)-> str:
+    
+    trip =['G1','G2','C2','C3','IE','B1','B2','B3','B4']
+    charge=['H2','H3','H4','H5','H8']
+    if string in trip:
+        return 'trip'
+    elif string in charge:
+        return 'charge'
+
+    return -1
+
+def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
+
+    df_dict_trip = {}
+    df_dict_charge = {}
+
+    all_columns_trip = ['TS','ST','ET','SO','JI','EO','MS','CiD','SpD','FlD','SD','RD','CiCE', 
+                   'SpCE','FlCE','CiRE','SpRE','MC','+Ti', 'ATi', '-Ti','+Te','ATe','-Te','SB', 'EB','MDI','MRI',
+                   'AI', 'TI','+TV','ATV', '-TV','+CV','-CV','+CD', '+T','AT','-T','MDTB','ABTD']
+
+    all_columns_charge = ['TS', 'Soc In', 'SoC Fin','Mi IV','Av IV','Mx IV','Mi VF','Av FV', 'Mx FV','Mx IBms','Mx I',
+                        'MP', 'Mi IT','Av IT','Mx IT','Mi FT','ID', 'Av FT','Mx FT','Mi AT','Mx AT','CN','BA','uSoc In',
+                        'uSoc Final','Charger Descriptor']
+
+    if type_name == 'trip':
+
+        for df in dataframes:
+            timestamp_column_name = 'TS'
+            id_column_name = 'JI'
+            
+            timestamp = df[timestamp_column_name].iloc[0]
+            identifier = df[id_column_name].iloc[0]
+
+            if (timestamp, identifier) in df_dict_trip:
+                # Actualizar los valores existentes en el DataFrame correspondiente
+                existing_df = df_dict_trip[(timestamp, identifier)]
+                for col in df.columns:
+                    if col not in [timestamp_column_name, id_column_name]:
+                        existing_df.loc[0, col] = df[col].iloc[0]
+                
+                # Verificar si todas las columnas están completas
+                if all(existing_df.notnull().all()):
+                    # Retornar el DataFrame y eliminarlo del diccionario
+                    del df_dict_trip[(timestamp, identifier)]
+                    
+                    return existing_df
+            else:
+                # Si no existe, crear una nueva entrada con el DataFrame vacío y luego asignar los datos
+                df_dict_trip[(timestamp, identifier)] = pd.DataFrame(columns=all_columns_trip)
+                
+                # Asignar valores a las columnas de timestamp y JI
+                df_dict_trip[(timestamp, identifier)].at[0, timestamp_column_name] = timestamp
+                df_dict_trip[(timestamp, identifier)].at[0, id_column_name] = identifier
+                
+                # Asignar valores a las otras columnas
+                for col in df.columns:
+                    if col not in [timestamp_column_name, id_column_name]:
+                        df_dict_trip[(timestamp, identifier)].loc[0, col] = df[col].iloc[0]
+            return df_dict_trip
+
+    elif type_name == 'charge':
+        for df in dataframes:
+            timestamp_column_name = 'TS'
+            
+            timestamp = df[timestamp_column_name].iloc[0]
+
+            if timestamp in df_dict_charge:
+                # Actualizar los valores existentes en el DataFrame correspondiente
+                existing_df = df_dict_charge[timestamp]
+                for col in df.columns:
+                    if col != timestamp_column_name:
+                        existing_df.loc[0, col] = df[col].iloc[0]
+                
+                # Verificar si todas las columnas están completas
+                if all(existing_df.notnull().all()):
+                    # Retornar el DataFrame y eliminarlo del diccionario
+                    del df_dict_charge[timestamp]
+                    return existing_df
+            else:
+                # Si no existe, crear una nueva entrada con el DataFrame vacío y luego asignar los datos
+                df_dict_charge[timestamp] = pd.DataFrame(columns=all_columns_charge)
+                
+                # Asignar valores a las columnas de timestamp y JI
+                df_dict_charge[timestamp].at[0, timestamp_column_name] = timestamp
+                
+                # Asignar valores a las otras columnas
+                for col in df.columns:
+                    if col != timestamp_column_name:
+                        df_dict_charge[timestamp].loc[0, col] = df[col].iloc[0]
+
+            # Mover el return fuera del bucle for si deseas retornar el diccionario después de procesar todos los dataframes
+            return df_dict_charge
+
+
+    return -1
+
+
+
 
 """********************     Parquet Files functions    ********************"""
 
