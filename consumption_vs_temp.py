@@ -31,12 +31,12 @@ La idea es ir vehiculo por vehiculo y obtener los siguientes datos:
 INDEX = 'VIN'
 KEY_COLUMNS = ['VIN','Id','Timestamp']
 NUM_ROWS = 10000
-DISTANCE_COLUMN = 'Total (km)'
+DISTANCE_COLUMN = 'Total distance'
 # TEMP_COLUMN = 'Motor min T (°C)'
 TEMP_COLUMN = 'Avg temp'
 # TEMP_COLUMN = 'Inv  min T (°C)'
 # TEMP_COLUMN = 'Average V'
-SOC_COLUMN = 'SoC delta (%)'
+SOC_COLUMN = 'SoC delta'
 TEXT_OFFSET = 500
 
 
@@ -118,7 +118,7 @@ def get_consumption_vs_temp(df):
     # Generate text to display the correlation and place it in the legend
     fig_text = f'r: {round(correlation*100,2)}%'
     fig_filtered.add_trace(go.Scatter(x=[x_position_filtered], y=[y_position_filtered], mode="text",name = fig_text ,showlegend=True))
-    fig_filtered.update_traces(textfont=dict(size=15, color="black"),marker=dict(size=2))
+    fig_filtered.update_traces(marker=dict(size=3))
     fig_filtered.update_layout(legend=dict(
         yanchor="top",
         y=0.99,
