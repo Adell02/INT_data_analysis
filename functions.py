@@ -668,21 +668,25 @@ def load_parameters_from_json():
     return data["parameters"]
 
 
-def verify_values_in_range(dataframe):
-
+def verify_values_in_range(file_path):
+   
+    if not os.path.exists(file_path):
+        return -1
+    
+    dataframe = pd.read_parquet(file_path)
+    
     parametrs = load_parameters_from_json()
+    for column in dataframe.columns:
+        value_max = parametrs.get(column, {}).get("Value_MAX") #Si el campo no se encuentra, get() devuelve un diccionario vacío ({})
+        value_min = parametrs.get(column, {}).get("Value_MIN")
 
-    for index, row_data in dataframe.iterrows():
-        df_aux = pd.DataFrame(row_data).transpose()
-        for value in df_aux:
-                value_max = parametrs.get(value, {}).get("Value_MAX") #Si el campo no se encuentra, get() devuelve un diccionario vacío ({})
-                value_min = parametrs.get(value, {}).get("Value_MIN")
-                # if not (df_aux[value] < value_max).any() or not (df_aux[value] > value_min).any():
-                #     dataframe = dataframe[~((dataframe['Timestamp'] == row_data['Timestamp']) & (dataframe.index == index))]
-                #value_max = parametrs[value][]
-                if row_data[value] < value_max or row_data[value] > value_min:
-                    dataframe = dataframe[~((dataframe['Timestamp'] == row_data['Timestamp']) & (dataframe.index == index))]
-        
+        condicion = (dataframe[column] >= value_min) & (dataframe[column] <= value_max)
+        dataframe = dataframe.loc[condicion]
+
+    # Generate the new file
+    table = pa.Table.from_pandas(dataframe)
+    pq.write_table(table,file_path)
+    
     return dataframe
 
 def df_create(string:str, param_order)->pd.DataFrame:
@@ -1121,23 +1125,26 @@ def df_update_column_tags(file_path:str,type_name:str) -> int:
 
     # Check type_name and update the column tags
     if type_name == 'trip':
-        column_tags_trip = ["Id","Start","End","Mins","End odometer","Max speed","City distance","Sport distance","Flow distance",
+        column_tags_trip = ["Timestamp","Id","Start","End","Mins","End odometer","Max speed","City distance","Sport distance","Flow distance",
                     "Sail distance","Regen distance","Total distance","City energy","Sport energy","Flow energy","City regen",
                     "Sport regen","Map changes","Total energy","Total regen","Regen","Inv max T","Inv avg T","Inv  min T",
                     "Motor max T","Motor avg T","Motor min T","Start SoC","End SoC","Max discharge","Max regen","SoC delta",
-                    "Avg current","Thermal current","Max V","Average V","Min V","Max cell V","Min cell V","Cell V diff","Max temp",
-                    "Avg temp","Min temp","Max delta","Avg delta","Temp general delta"]
+                    "Avg current","Thermal current","Max V","Average V","Min V","Max cell V","Min cell V","Cell V diff","Max temp CT",
+                    "Avg temp","Min temp CT","Max delta","Avg delta","Temp general delta"]
 
         df.columns = column_tags_trip
-        return 0
     
-    if type_name == 'charge':
+    elif type_name == 'charge':
 
         column_tags_charge = ["SoC i","SoC f","Vmin I","Vavg I","Vmax I","Vmin F","Delta V I","Avg final V","Max final V","Max BMS current",
                            "Max charger current","Charger max P","Min temp I","Avg temp I","Max temp I","Min temp F","Avg temp F",
-                           "Max temp F","Cycles","Age","uSoC I","uSoC F","Connector"]
+                           "Max temp F","Min temp CC","Max temp CC","Cycles","Age","uSoC I","uSoC F","Connector"]
 
         df.columns = column_tags_charge
-        return 0
+    else:
+        return -1
 
-    return -1
+    # Generate the new file
+    table = pa.Table.from_pandas(df)
+    pq.write_table(table,file_path)
+    return 0
