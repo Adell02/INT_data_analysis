@@ -33,9 +33,9 @@ KEY_COLUMNS = ['VIN','Id','Timestamp']
 NUM_ROWS = 10000
 DISTANCE_COLUMN = 'Total (km)'
 # TEMP_COLUMN = 'Motor min T (°C)'
-# TEMP_COLUMN = 'Avg temp'
+TEMP_COLUMN = 'Avg temp'
 # TEMP_COLUMN = 'Inv  min T (°C)'
-TEMP_COLUMN = 'Average V'
+# TEMP_COLUMN = 'Average V'
 SOC_COLUMN = 'SoC delta (%)'
 TEXT_OFFSET = 500
 
@@ -115,20 +115,24 @@ def get_consumption_vs_temp(df):
     x_position_filtered = min(df_filtered[TEMP_COLUMN])+TEXT_OFFSET
     y_position_filtered = max(df_filtered[CONSUMPTION_COLUMN])
 
-    # Generate text and place it in the figures
+    # Generate text to display the correlation and place it in the legend
     fig_text = f'r: {round(correlation*100,2)}%'
-    fig_filtered.add_trace(go.Scatter(x=[x_position_filtered], y=[y_position_filtered], mode="text",text=fig_text, showlegend=False))
-    fig_filtered.update_traces(textfont=dict(size=15, color="black"),marker=dict(size=1))
+    fig_filtered.add_trace(go.Scatter(x=[x_position_filtered], y=[y_position_filtered], mode="text",name = fig_text ,showlegend=True))
+    fig_filtered.update_traces(textfont=dict(size=15, color="black"),marker=dict(size=2))
     fig_filtered.update_layout(legend=dict(
         yanchor="top",
         y=0.99,
         xanchor="right",
         x=0.99
 ))
+    
     return fig_filtered
 
+df = pd.read_parquet("df/2023_07_trip.parquet")
+fig = get_consumption_vs_temp(df)
+fig.show()
 
-    """
+"""
     This second part consists of showing a different analyses of the situation. Now we are going to weigh the points to be shown
     into the scatter plot, to do so:
         1) Get the mean and standard deviation of the km 
