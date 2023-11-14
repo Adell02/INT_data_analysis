@@ -701,7 +701,6 @@ def load_parameters_from_json():
         data = json.load(json_file)
     return data["parameters"]
 
-
 def df_verify_values_in_range(file_path):
    
     if not os.path.exists(file_path):
@@ -903,9 +902,35 @@ def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
 
 
 
-"""********************     Parquet Files functions    ********************"""
+"""********************     Data treatment and storage functions    ********************"""
 
-def df_generate_month_df(file_path:str,type_name:str,year:int,month:int) -> pd.DataFrame:
+def find_max_distance(df):
+    
+    # Find the index and maximum travelled distance within a month
+    # 
+    # INPUTS:
+    # - df
+    # 
+    # OUTPUT:
+    # - distance_index = [max_distance, max_distance_index]
+    
+    DISTANCE_COLUMN = 'Total distance'
+
+    # Group by index and accumulate all distances
+    total_distances_by_index = df.groupby(df.index)[DISTANCE_COLUMN].sum()
+
+    # Find the index which has the maximum distance travelled
+    max_distance_index = total_distances_by_index.idxmax()
+
+    # Find the totale maximum distance
+    max_distance = total_distances_by_index.max()
+    
+    # Generate the output tuple including both data
+    distance_index = [max_distance,max_distance_index]
+
+    return distance_index
+
+def df_generate_month_df(file_path_trip:str,file_path_charge:str,year:int,month:int) -> pd.DataFrame:
     # Given a month and year, generates a dataframe containing all "data_to_save" information
     # which will be further (in another function) appended to the parquet file that contains
     # all months.
@@ -915,44 +940,43 @@ def df_generate_month_df(file_path:str,type_name:str,year:int,month:int) -> pd.D
     # IMPORTANT: The function saves the mean value of the columns to be saved
     # 
     # INPUT  
-    #   - data_to_save:     columns to be "meaned" and saved in the new df
+    #   - file_path:        .parquet from which to read the last month's data
+    #   - type_name:        indicates if the file is 
     #   - month, year:      integers to indicate the month and year of the dataframe
     # 
     # OUTPUT
     #   - -1 if no file matches the date
     #   - df_month
 
-    """ Se suposa que els noms de les columnes son correctes i no s'ha de fer cap check """
-    MONTHLY_DATA_TRIP = ['Mins','Max speed','Total (km)','Total energy (Wh)','Inv  min T (°C)']
-    MONTHLY_DATA_CHARGE = ['Min temp I','Max temp I']
-
-    df = pd.read_parquet(file_path)
-
-    if type_name == 'trip':
-        # Generate a new dataframe containing the necessary columns from both vectors    
-        df_month = pd.DataFrame(columns = MONTHLY_DATA_TRIP)
-        for column_tag in MONTHLY_DATA_TRIP:
-            df_month[column_tag] = None   
-        
-        # Add to the dataframe all columns to be stored. Note that the value saved is
-        # the average 
-        mean_trip = pd.DataFrame(df[MONTHLY_DATA_TRIP].mean()).transpose()
-        df_month[MONTHLY_DATA_TRIP] = mean_trip
-
-    elif type_name == 'charge':
-        # Generate a new dataframe containing the necessary columns from both vectors    
-        df_month = pd.DataFrame(columns = MONTHLY_DATA_CHARGE)
-        for column_tag in MONTHLY_DATA_CHARGE:
-            df_month[column_tag] = None   
-        
-        # Add to the dataframe all columns to be stored. Note that the value saved is
-        # the average 
-        mean_trip = df[MONTHLY_DATA_CHARGE].mean()
-        df_month[MONTHLY_DATA_CHARGE] = mean_trip
-    
-    else:
+    if not (os.path.exists(file_path_trip) and os.path.exists(file_path_charge)):
         return -1
+    
+    df_trip = pd.read_parquet(file_path_trip)
+    df_charge = pd.read_parquet(file_path_charge)
 
+    # Generate a dictionary with all data of interest, using both df_trip and df_charge
+    # to do so
+    new_row = {
+        'Connected vehicles':           df_trip.index.nunique(),
+        'Total distance':               round(sum(df_trip["Total distance"])),
+        'City distance':                round(sum(df_trip["City distance"])),
+        'Sport distance':               round(sum(df_trip["Sport distance"])),
+        'Flow distance':                round(sum(df_trip["Flow distance"])),  
+        'Average trip distance':        round(df_trip["Total distance"].mean()),
+        'Average consumption':          round(((sum(df_trip["Total energy"]) - sum(df_trip["Total regen"])) / sum(df_trip["Total distance"]))),
+        'Average range':                round(7500/((sum(df_trip["Total energy"]) - sum(df_trip["Total regen"])) / sum(df_trip["Total distance"]))),
+        'Average charged SoC':          round((df_charge['uSoC F']-df_charge['uSoC I']).mean()),
+        'Average final charging SoC':   round(df_charge['uSoC F'].mean()),
+        'Shucko':                       round(len(df_charge["Connector"][df_charge["Connector"] == 0])*100/df_charge.shape[0]),
+        'Max km in month':              find_max_distance(df_trip)[1],
+        'Max km in month VIN':          find_max_distance(df_trip)[0],
+        'Max km odometer':              df_trip['End odometer'].max(),
+        'Max km odometer VIN':          df_trip['End odometer'].idxmax(),
+        'Trips between charges':        round(df_trip.shape[0]/df_charge.shape[0],1)                         
+    }
+
+    df_month = pd.DataFrame([new_row])
+    
     # Generate the date string and update df_month
     date_string = f'{year}-{month:02}'
     date = np.datetime64(date_string)
@@ -983,9 +1007,11 @@ def df_add_df_to_parquet_file(file_path:str,df_new:pd.DataFrame) -> pd.DataFrame
         df_exist = pd.read_parquet(file_path)
         df_final = pd.concat([df_exist,df_new])
 
+        # If the file_path corresponds to a critical data type
         # Erase possible duplicates and sort rows by ascending date
-        df_final.drop_duplicates(subset='Date',keep='last',inplace=True)
-        df_final.sort_values(by='Date',ascending=True,inplace=True)
+        if 'Date' in df_final.columns:
+            df_final.drop_duplicates(subset='Date',keep='last',inplace=True)
+            df_final.sort_values(by='Date',ascending=True,inplace=True)
 
         # Overwrite file
         table = pa.Table.from_pandas(df_final)
