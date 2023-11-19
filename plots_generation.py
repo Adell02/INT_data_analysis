@@ -412,7 +412,18 @@ def generate_line_chart(dataframe,element_x,elements_y,title='Unnamed Line Chart
     return fig
 
 def generate_bar_chart(dataframe,element_x,elements_y,title='Unnamed Bar Chart'):
-    
+    # This function generates a bar chart given a dataframe and multiple or single
+    # elements to be plotted
+    # 
+    # INPUTS:
+    #   - dataframe
+    #   - element_x
+    #   - elements_y
+    #   - title
+    #   
+    # OUTPUT
+    #   - plotly figure
+
     trace_vector = trace_bar_chart(dataframe,element_x,elements_y)
 
     fig = go.Figure(data=trace_vector)

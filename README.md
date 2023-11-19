@@ -1,146 +1,78 @@
 # INT_data_analysis
-Data analysis for INT project
-<h1>Function Descriptions</h1>
-<details>
-<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Multi Histogram Function</b></summary>
 
+
+This repository conatins all files used to store, filter, analyse and display Ray's data. To do so, functions have been divided into different files: `plots_generation.py`, `dataframe_treatment.py`, `dataframe_generation.py` and `data_analysis.py`.
+
+<h2>Plots Generation</h2>
+
+The file `plots_generation.py` contains all functions regarding plot generation, next there are the basic plots that can be used. 
+
+All functions return a `plotly` figure. Otherwise, it will be noted beneath.
+
+Note that all functions that are usually accessed start with `generate_` to easily find them when programming.
+
+<details>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Multi Histogram</b></summary>
 
 ## Description
 
 The `multi_histogram` function takes a DataFrame and a list of column names as input to create a multiple histogram plot. Each column of the DataFrame is represented as a histogram on the plot, allowing for a visual comparison of different datasets in a single visualization.
 
-## Parameters
-
+## Header & Parameters
+`generate_multi_histogram(dataframe,elements,units='',start=-200,end=200,step=10, title='Unnamed distribution')`
 - `dataframe`: The DataFrame containing the data to be represented in the histograms.
 - `elements`: A list of column names from the DataFrame. Each column will be represented as a histogram on the plot.
 - `units`: Optional string representing the units of the variable on the x-axis.
-- `start`, `end`, `step`: Optional parameters controlling the configuration of the x-axis and histogram bins.
-- `title`: Title of the plot.
-
-## Output
-
-The function returns a `go.Figure` object that can be displayed or saved as needed.
-
-## Example Usage
-
-```python
-import pandas as pd
-import plotly.graph_objects as go
-
-def multi_histogram(dataframe, elements, units='', start=-200, end=200, step=10, title='Unnamed distribution'):
-    # ... (Paste the function code here)
-
-# Create an example DataFrame
-data = {'A': [1, 2, 2, 3, 3, 3, 4, 4, 4, 4],
-        'B': [2, 2, 3, 3, 3, 4, 4, 4, 4, 5],
-        'C': [3, 3, 3, 4, 4, 4, 4, 5, 5, 5]}
-df = pd.DataFrame(data)
-
-# Use the multi_histogram function to visualize column distributions
-fig = multi_histogram(df, elements=['A', 'B', 'C'], units='Value', title='Distribution Comparison')
-fig.show()
-```
-
-
-This example demonstrates the use of the `multi_histogram` function, which creates multi-histogram plots with Plotly. The function takes a DataFrame and a list of column names, allowing users to visualize the distributions of specified columns. The example uses a Pandas DataFrame with sample data in columns 'A', 'B', and 'C' and calls the function to generate a Plotly figure. Users can customize parameters such as units, axis range, and title for tailored visualizations.
+- `start`, `end`, `step`: Optional parameters controlling the configuration of the x-axis and histogram bins. All have preset values and don't need to be taken into account.
+- `title`: Title of the plot. "Unnamed distribution" by default.
 
 </details>
 
 
 <details>
-<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Pie Chart Function</b></summary>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Pie Chart</b></summary>
 
 
 ## Description
 
 The `pie_chart` function is an effective tool for creating pie chart graphics. This function can generate subplots containing multiple pie charts if it is necessary to segregate certain information into different categories but visualize it together.
 
-## Parameters
-
+## Header & Parameters
+`generate_pie_chart(dataframe,elements,title='Unnamed pie chart)`
 - `dataframe`: The DataFrame containing the data for the pie chart.
 - `elements`: An array of arrays (each position contains the names of a single pie chart).
 - `title`: Title of the chart.
 
-## Output
-
-The function returns a pie chart figure object.
-
-## Example Usage
-
-```python
-import pandas as pd
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-
-def pie_chart(dataframe, elements, title='Unnamed pie chart'):
-
-    num_elements = len(elements)
-
-    fig = make_subplots(
-        rows=1,
-        cols=num_elements,
-        specs=[[{'type':'domain'}, {'type':'domain'}]]
-    )
-
-    for i in range(num_elements):
-        fig.add_trace(generate_go_pie(dataframe, elements[i], ''), 1, i+1)
-
-    fig.update_traces(hole=.4, hoverinfo="label+percent+name")
-
-    fig.update_layout(title_text=title)
-
-    return fig
-```
-This example code uses the pie_chart function to create a pie chart from a DataFrame and a list of elements. You can customize the parameters according to your specific needs.
 </details>
 
 <details>
-<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Trace Trendline Function</b></summary>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Scatter Plot</b></summary>
 
 ## Description
+The scatter plot is a most used function in data analysis. The user can introduce different elements to be plotted and can decide whether to display a regression line using Ordinary Least Squares (OLS) regression. This utility is particularly useful when visualizing trends in data.
 
-The `trace_trendline` function efficiently generates trendlines using Ordinary Least Squares (OLS) regression. This utility is particularly useful when visualizing trends in data by providing regression lines for a selected x-axis element and multiple y-axis elements. The function is designed to accommodate diverse datasets and supports customization of trendline aesthetics.
-
-## Parameters
-- `dataframe`: The DataFrame containing the data for regression analysis.
+## Header & Parameters
+`generate_scatter_plot(dataframe,element_x,elements_y,title:"Unnamed scatter plot,reg_line=True)`
+- `dataframe`: The DataFrame containing the data.
 - `element_x`: The element to be displayed on the x-axis.
-- `elements_y`: A list of elements for which trendlines will be displayed on the y-axis.
-- `title`: Title of the trendlines (default is 'Trendline').
+- `elements_y`: A list of elements for which traces will be displayed on the y-axis.
+- `title`: Title of the plot. 
+- `reg_line`: "True" by default.
 
-## Output
-The function returns a vector of Plotly traces representing the trendlines generated for each element specified in `elements_y`. Each trace corresponds to a trendline, allowing for easy integration into a Plotly figure.
-
-## Example Usage
-```python
-import pandas as pd
-import statsmodels.api as sm
-import plotly.graph_objects as go
-
-# Define DataFrame and elements
-data = {'X': [1, 2, 3, 4, 5],
-        'Y1': [2, 3, 4, 3, 5],
-        'Y2': [1, 2, 2, 3, 4]}
-df = pd.DataFrame(data)
-
-# Use the trace_trendline function to generate trendlines for Y1 and Y2 with X as the x-axis
-trendlines = trace_trendline(df, element_x='X', elements_y=['Y1', 'Y2'], title='Regression Trends')
-
-# Incorporate trendlines into a Plotly figure
-fig = go.Figure(trendlines)
-fig.show()
-```
-This code snippet demonstrates the application of the `trace_trendline` function to visualize regression trends for `Y1` and `Y2` against `X`. Users can modify the function parameters for different datasets and customization requirements.
 
 </details>
 
 <details>
-<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Generate Scatter Plot User Function</b></summary>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Scatter Plot User</b></summary>
 
 ## Description
 
 The `generate_scatter_plot_user` function generates a scatter plot given a DataFrame, a specified user ID (`key_user`), an x-axis element (`element_x`), and a vector of y-axis elements (`elements_y`). The function allows for customization with an optional title and the ability to integrate regression lines. If a specific user's data is requested (`user_reg_line=True`), an individualized trendline is added to the plot.
 
-## Parameters
+Also, if no user is specified or it is not found in the dataframe given, the function will call a "regular" scatter plot to be generated.
+
+## Header & Parameters
+`generate_scatter_plot_user(dataframe,key_user,element_x,elements_y,title="Unnamed Scatter Plot",user_reg_line=False,reg_line=False)`
 - `dataframe`: The DataFrame containing all the data.
 - `key_user`: ID of the user for whom data is needed.
 - `element_x`: The x-axis data.
@@ -148,28 +80,102 @@ The `generate_scatter_plot_user` function generates a scatter plot given a DataF
 - `title`: Title of the graph (default is "Unnamed Scatter Plot").
 - `user_reg_line`: Boolean indicating if an individualized regression line for the user is desired (default is False).
 - `reg_line`: Boolean indicating if a general regression line for the entire dataset is desired (default is False).
-
-## Output
-If successful, the function returns a Plotly figure. If an error occurs or the user is not found in the DataFrame, the function returns None. The returned Plotly figure comprises a set of traces representing the trendlines generated for each element specified in `elements_y`. Each trace corresponds to a trendline, facilitating seamless integration into a Plotly figure.
-
-## Example Usage
-```python
-import pandas as pd
-import plotly.graph_objects as go
-
-# Define DataFrame and elements
-data = {'User_ID': [1, 1, 2, 2, 3, 3],
-        'Age': [25, 30, 22, 28, 35, 40],
-        'Income': [50000, 60000, 45000, 55000, 70000, 80000],
-        'Spending': [100, 120, 80, 110, 150, 160]}
-df = pd.DataFrame(data)
-
-# Generate a scatter plot for User ID 2, plotting 'Age' on the x-axis and 'Income' and 'Spending' on the y-axis
-fig = generate_scatter_plot_user(df, key_user=2, element_x='Age', elements_y=['Income', 'Spending'], title='User Spending Habits')
-fig.show()
-```
-This example demonstrates how to use the `generate_scatter_plot_user` function to create a scatter plot for a specific user ( **User ID 2** ) and visualize their spending habits. Users can customize the parameters based on their specific dataset and analysis requirements.
 </details>
+
+<details>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Line Chart</b></summary>
+
+## Description
+
+Although not used in further analysis, a line chart can be generated given a `dataframe` and specifying which data must be plotted (`elements_y` and `element_x`).
+
+## Header & Parameters
+`generate_line_chart(dataframe,element_x,elements_y,title='Unnamed Line Chart')`
+- `dataframe`: The DataFrame containing all the data.
+- `element_x`: The x-axis data.
+- `elements_y`: A vector containing all the different data sources to be plotted.
+- `title`: Title of the graph (default is "Unnamed Line Chart").
+
+</details>
+
+<details>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Bar Chart</b></summary>
+
+## Description
+Bar charts can be plotted if needed using `generate_bar_chart`. These graphs are useful when displaying a quantity over a quantised variable, such as time or a numeric sets.
+
+## Header & Parameters
+`generate_bar_chart(dataframe,element_x,elements_y,title='Unnamed Bar Chart')`
+- `dataframe`: The DataFrame containing all the data.
+- `element_x`: The x-axis data.
+- `elements_y`: A vector containing all the different data sources to be plotted.
+- `title`: Title of the graph (default is "Unnamed Bar Chart").
+</details>
+
+<details>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Response Surface</b></summary>
+
+## Description
+A 3D graph can be generated using this function. Typically, these graphics are useful when trying to dig further into the correlation between several variables when it is known that a parameter can have dependence over more than one variable. It can help to deepen the analysis of certain parameters.
+
+## Header & Parameters
+`generate_response_surface(dataframe,element_x,element_y,element_z,title='Unnamed Response Surface')`
+- `dataframe`: The DataFrame containing all the data.
+- `element_x`: The x-axis data.
+- `element_y`: The y-axis data.
+-`element_z`: The z-axis data.
+- `title`: Title of the graph (default is "Unnamed Response Surface").
+
+## Caution
+Bear in mind that, in order to generate a response surface, it generates a interpolated grid from the parameters passed to the functions. It is crucial that no aberrant measures are contained in either of the elements passed. User be advised.
+</details>
+
+<details>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Box Plot</b></summary>
+
+## Description
+Box plots are used when showing the distribution of data points across a selected measure. These charts display ranges within variables measured. This includes the outliers, the median, the mode, and where the majority of the data points lie in the “box”.
+
+## Header & Parameters
+`generate_box_plot(dataframe,elements,title='Unamed Box Plot')`
+- `dataframe`: The DataFrame containing all the data.
+- `element_x`: The x-axis data.
+- `title`: Title of the graph (default is "Unnamed Response Surface").
+
+</details>
+<br>
+<h2>Datframe Treatment</h2>
+
+This file contains all functions necessary to assure that the data stored in a dataframe is correct,
+contains all information and it is normalised so that future analyses can be done.
+
+The main function is `df_filter_data`, which will return a filtered and depurated dataframe, the rest of
+functions are auxiliary and do not need to be particularily used for external purposes.
+
+`df_get_colum_tags_dictionary` returns a vector containing all the names of the columns given the type_name
+(`trip` or `charge`). It is useful if it is needed to list all the variables contained in the dataframe or to check whether one particular variable is within the dataframe.
+
+Note that all functions related to managing dataframes start with `df_` to find them easily when programming.
+
+<details>
+<summary style="color: #ADD8E6;"><b style="font-size: 18px;">Data filtering</b></summary>
+
+## Description
+This funciton: `df_filter_data`, given a raw dataframe, will do as follows:
+1)  Update the column names (in case the dataframe comes from an xlsx file withdifferent column_tags).
+2)  Add secondary columns, which are product of primary columns.
+3)  Sort columns, so that the order is the same as in the param_battery.json file.
+4)  Verify values, in case there are any data out of acceptable bounds.
+5)  Apply the resolution of each column.
+
+Note: It is of upmost importance that this function has to be executed before appending a dataframe to a definitive .parquet to ensure that all data stored has been checked.
+
+## Header & Parameters
+`df_filter_data(df:pd.DataFrame, type_name:str)`
+- `dataframe`: The DataFrame containing the data to be represented in the histograms.
+- `type_name`: To indicate if the dataframe introduced contains `trip`-related or `charge`-related data.
+</details>
+
 <details>
 <summary style="color: #ADD8E6;"><b style="font-size: 18px;">Generate df from elements Function</b></summary>
 

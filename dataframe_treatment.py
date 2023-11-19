@@ -5,6 +5,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 """
+*************************************************************************************************************
 This file contains all functions necessary to assure that the data stored in a dataframe is correct,
 contains all information and it is normalised so that future analyses can be done
 
@@ -13,7 +14,7 @@ functions are auxiliary and do not need to be particularily used for external pu
 
 df_get_colum_tags_dictionary returns a vector containing all the names of the columns given the type_name
 ('trip' or 'charge). It is useful if it is needed to list all the variables conained in the dataframe.
-
+*************************************************************************************************************
 """
 
 def df_get_column_tags_dictionary(type_name:str):
