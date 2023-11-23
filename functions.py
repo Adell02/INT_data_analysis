@@ -10,14 +10,27 @@ from scipy import interpolate
 import pyarrow as pa
 import pyarrow.parquet as pq
 import datetime
-#Protocol Dictionary
-protocol_dict={"G1":["TS", "ST", "ET", "SO","JI"],"G2":["TS", "EO", "MS", "JI"],"C2":["TS", "CiD", "SpD","FlD","SD","RD","JI"],
-                   "C3":["TS", "CiCE", "SpCE","FlCE","CiRE","SpRE","MC","JI"],"IE":["TS", "+Ti", "ATi", "-Ti","+Te","ATe","-Te","JI"],
-                   "B1":["TS", "SB", "EB","MDI","MRI","JI"],"B2":["TS", "AI", "TI","+TV","JI"],"B3":["TS", "ATV", "-TV","+CV","-CV","JI"],
-                   "B4":["TS", "+CD", "+T","AT","-T","MDTB","ABTD","JI"],"H2":["TS", "Soc In", "SoC Fin","Mi IV","Av IV","Mx IV","Mi VF"],
-                   "H3":["TS", "Av FV", "Mx FV","Mx IBms","Mx I"], "H4":["TS", "MP", "Mi IT","Av IT","Mx IT","Mi FT"], 
-                   "H5":["TS", "ID", "Av FT","Mx FT","Mi AT","Mx AT","CN","BA"],"H8":["TS", "uSoc In", "uSoc Final","Charger Descriptor"]}
 
+#Protocol Dictionary
+protocol_dict={"G1":["Timestamp", "Start", "End", "Start odometer", "Id"],
+                   "G2":["Timestamp", "End odometer", "Max speed", "Id"],
+                   "C2":["Timestamp", "City distance", "Sport distance","Flow distance","Sail distance","Regen distance","Id"],
+                   "C3":["Timestamp", "City energy", "Sport energy","Flow energy","City regen","Sport regen","Map changes","Id"],
+                   "IE":["Timestamp", "Inv max T", "Inv avg T", "Inv  min T","Motor max T","Motor avg T","Motor min T","Id"],
+                   "B1":["Timestamp", "Start SoC", "End SoC","Max discharge","Max regen","Id"],
+                   "B2":["Timestamp", "Avg current", "Thermal current","Max V","Id"],
+                   "B3":["Timestamp", "Average V", "Min V","Max cell V","Min cell V","Id"],
+                   "B4":["Timestamp", "Cell V diff", "Max temp","Avg temp","Min temp","Max delta","Avg delta","Id"],
+                   "H2":["Timestamp", "SoC i", "SoC f","Vmin I","Vavg I","Vmax I","Vmin F"],
+                   "H3":["Timestamp", "Avg final V", "Max final V","Max BMS current","Max charger current"], 
+                   "H4":["Timestamp", "Charger max P", "Min temp I","Avg temp I","Max temp I","Min temp F"],
+                   "H5":["Timestamp", "Avg temp F","Max temp F","Min temp CC","Max temp CC","Cycles","Age"],
+                   "H8":["Timestamp", "uSoC I", "uSoC F","Connector"]}
+#En el H5-->"H5":["Timestamp", "ID", "Avg temp F","Max temp F","Min temp CC","Max temp CC","Cycles","Age"] el ID apareix al protocol pero no a 
+#la seva descripcio ni tampoc apareix en el excel. DE MOMENT NO EL POSO
+
+df_dict_trip = {}
+df_dict_charge = {}
 
 """********************     Trace generation    ********************"""
 
@@ -695,8 +708,8 @@ def df_check_user_values(usr_dataframe):
     return result, elements_check
 '''
 
-# Leer el archivo JSON con los valores máximos y mínimos
 def load_parameters_from_json():
+    # Leer el archivo JSON con los valores máximos y mínimos
     with open('param_battery.json', 'r') as json_file:
         data = json.load(json_file)
     return data["parameters"]
@@ -801,7 +814,7 @@ def df_from_string_to_df(string:str)-> (pd.DataFrame,str):
         param_order = protocol_dict["H8"]
         df_str=df_create(string, param_order)
     
-    return df_str , type_name
+    return (df_str, type_name)
 
 def check_type(string:str)-> str:
     
@@ -816,22 +829,21 @@ def check_type(string:str)-> str:
 
 def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
 
-    df_dict_trip = {}
-    df_dict_charge = {}
 
-    all_columns_trip = ['TS','ST','ET','SO','JI','EO','MS','CiD','SpD','FlD','SD','RD','CiCE', 
-                   'SpCE','FlCE','CiRE','SpRE','MC','+Ti', 'ATi', '-Ti','+Te','ATe','-Te','SB', 'EB','MDI','MRI',
-                   'AI', 'TI','+TV','ATV', '-TV','+CV','-CV','+CD', '+T','AT','-T','MDTB','ABTD']
+    all_columns_trip = ['Timestamp','Id','Start','End','Start odometer','End odometer','Max speed','City distance','Sport distance','Flow distance','Sail distance','Regen distance','City energy', 
+                   'Sport energy','Flow energy','City regen','Sport regen','Map changes','Inv max T', 'Inv avg T', 'Inv  min T','Motor max T','Motor avg T','Motor min T',
+                   'Start SoC', 'End SoC','Max discharge','Max regen','Avg current', 'Thermal current','Max V','Average V', 'Min V','Max cell V','Min cell V',
+                   'Cell V diff', 'Max temp','Avg temp','Min temp','Max delta','Avg delta']
 
-    all_columns_charge = ['TS', 'Soc In', 'SoC Fin','Mi IV','Av IV','Mx IV','Mi VF','Av FV', 'Mx FV','Mx IBms','Mx I',
-                        'MP', 'Mi IT','Av IT','Mx IT','Mi FT','ID', 'Av FT','Mx FT','Mi AT','Mx AT','CN','BA','uSoc In',
-                        'uSoc Final','Charger Descriptor']
+    all_columns_charge = ['Timestamp', 'SoC i', 'SoC f','Vmin I','Vavg I','Vmax I','Vmin F','Avg final V', 'Max final V','Max BMS current','Max charger current',
+                        'Charger max P', 'Min temp I','Avg temp I','Max temp I','Min temp F', 'Avg temp F','Max temp F','Min temp CC','Max temp CC','Cycles','Age','uSoC I',
+                        'uSoC F','Connector']
 
     if type_name == 'trip':
 
         for df in dataframes:
-            timestamp_column_name = 'TS'
-            id_column_name = 'JI'
+            timestamp_column_name = 'Timestamp'
+            id_column_name = 'Id'
             
             timestamp = df[timestamp_column_name].iloc[0]
             identifier = df[id_column_name].iloc[0]
@@ -861,11 +873,11 @@ def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
                 for col in df.columns:
                     if col not in [timestamp_column_name, id_column_name]:
                         df_dict_trip[(timestamp, identifier)].loc[0, col] = df[col].iloc[0]
-            return df_dict_trip
+        return df_dict_trip
 
     elif type_name == 'charge':
         for df in dataframes:
-            timestamp_column_name = 'TS'
+            timestamp_column_name = 'Timestamp'
             
             timestamp = df[timestamp_column_name].iloc[0]
 
@@ -893,8 +905,7 @@ def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
                     if col != timestamp_column_name:
                         df_dict_charge[timestamp].loc[0, col] = df[col].iloc[0]
 
-            # Mover el return fuera del bucle for si deseas retornar el diccionario después de procesar todos los dataframes
-            return df_dict_charge
+        return df_dict_charge
 
 
     return -1
@@ -1177,12 +1188,12 @@ def resolution(df,type_name:str):
 
     return df
 
-def df_update_column_tags(file_path:str,type_name:str) -> int:
-    
+def df_update_column_tags(df:pd.DataFrame,type_name:str) -> pd.DataFrame:
+    '''
     # Check if file_path is correct
     if not os.path.exists(file_path):
         return -1
-    df = pd.read_parquet(file_path)
+    df = pd.read_parquet(file_path)'''
 
     # Check type_name and update the column tags
     if type_name == 'trip':
@@ -1197,7 +1208,7 @@ def df_update_column_tags(file_path:str,type_name:str) -> int:
     
     elif type_name == 'charge':
 
-        column_tags_charge = ["SoC i","SoC f","Vmin I","Vavg I","Vmax I","Vmin F","Delta V I","Avg final V","Max final V","Max BMS current",
+        column_tags_charge = ["Timestamp","SoC i","SoC f","Vmin I","Vavg I","Vmax I","Vmin F","Delta V I","Avg final V","Max final V","Max BMS current",
                            "Max charger current","Charger max P","Min temp I","Avg temp I","Max temp I","Min temp F","Avg temp F",
                            "Max temp F","Min temp CC","Max temp CC","Cycles","Age","uSoC I","uSoC F","Connector"]
 
