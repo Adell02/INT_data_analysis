@@ -1,3 +1,4 @@
+from plots_generation import*
 
 def delta_SoC_vs_Total_Energy(df_trip):
     '''
@@ -6,9 +7,9 @@ def delta_SoC_vs_Total_Energy(df_trip):
         Output: fig (plotly.graph_objects.Figure)
     '''
     DIF_SOC = '∂SoC'
-    TOTAL_ENERGY = 'Total energy (Wh)'
-    DELTA_SOC = 'SoC delta (%)'
-    fig = generate_scatter_plot(df_tirp,TOTAL_ENERGY,DELTA_SOC,title= DIF_SOC, reg_line=True)
+    TOTAL_ENERGY = 'Total energy'
+    DELTA_SOC = 'SoC delta'
+    fig = generate_scatter_plot(df_trip,TOTAL_ENERGY,DELTA_SOC,title= DIF_SOC, reg_line=True)
     return fig
 
 
@@ -18,13 +19,13 @@ def mode_energy_vs_kilometers(df_trip):
         Input: df_trip (DataFrame)
         Output: fig (plotly.graph_objects.Figure)
     '''
-    SPORT_MODE = 'Sport energy (Wh)' 
-    CITY_MODE = 'City energy (Wh)'
-    FLOW_MODE = 'Flow energy (Wh)'
+    SPORT_MODE = 'Sport energy' 
+    CITY_MODE = 'City energy'
+    FLOW_MODE = 'Flow energy'
     DISTANCE = 'End odometer'
-    DISTANCE_CITY = 'City (km)'
-    DISTANCE_SPORT = 'Sport (km)' 
-    DISTANCE_FLOW = 'Flow (km)'
+    DISTANCE_CITY = 'City distance'
+    DISTANCE_SPORT = 'Sport distance' 
+    DISTANCE_FLOW = 'Flow distance'
     DIF_SPORT_MODE = 'Differential Sport energy (Wh/km)'
     DIF_CITY_MODE = 'Differential city energy (Wh/km)'
     DIF_FLOW_MODE = 'Differential flow energy (Wh/km)'
@@ -61,12 +62,12 @@ def delta_soc_vs_inv_min_temp(df_trip):
         - The function calculates the average change in SoC per unit temperature for each inverter minimum temperature.
 
     """
-    INV_MIN_T = 'Inv min T (°C)'
-    DELTA_SOC = 'SoC delta (%)'
+    INV_MIN_T = 'Inv min T'
+    DELTA_SOC = 'SoC delta'
     TITLE = '∂SoC'
     SOC_VS_TEMP = 'Soc Delta vs Inv min T(%/°C)'
     CONSUMPTION_COLUMN = 'Consumption SoC(%)/km'
-    DISTANCE_COLUMN = 'Total (km)'
+    DISTANCE_COLUMN = 'Total distance'
     df_final = pd.DataFrame()
     df_final[CONSUMPTION_COLUMN] = df_trip[DELTA_SOC] / df_trip[DISTANCE_COLUMN]
     df_final[INV_MIN_T] = df_trip[INV_MIN_T]
@@ -99,9 +100,9 @@ def inv_min_t_vs_cell_min_t_vs_total_energy(df_trip):
         Output: DataFrame: The response surface DataFrame.
 
     """
-    INV_MIN_T = 'Inv  min T (°C)'
-    TOTAL_ENERGY = 'Total energy (Wh)'
-    CELL_MIN_T = 'Min temp'
+    INV_MIN_T = 'Inv min T'
+    TOTAL_ENERGY = 'Total energy'
+    CELL_MIN_T = 'Min temp CT'
     return generate_response_surface(df_trip, INV_MIN_T, CELL_MIN_T, TOTAL_ENERGY, title='Temperature Response Surface')
 #Para entregar
 def correlation(df, columns):
@@ -118,3 +119,86 @@ def correlation(df, columns):
     selected_df = df[columns]
     correlation_matrix = selected_df.corr()
     return px.imshow(correlation_matrix, labels=dict(x="Columnas", y="Columnas", color="Correlación"))
+
+
+def batery_temp_vs_distance(df):
+    """
+    Batery temperature average vs distance
+    Inputs:
+        df (pandas.DataFrame): The input DataFrame.
+        columns (list): A list of column names to include in the correlation calculation.
+
+    Outputs:
+        generate_bar_chart()
+    """  
+    AVERAGE_TEMP = 'Avg temp'
+    DISTANCE_COLUMN = 'Total distance'
+    
+    # Divide todos los valores de la columna "average temp" por 100 para convertirlos a grados Celsius
+    df[AVERAGE_TEMP] = df[AVERAGE_TEMP] / 100
+
+    # Create a new column representing 10 km intervals
+    df['Intervalo_10'] = (df[DISTANCE_COLUMN] // 10) * 10
+
+    # Group the data by the new column and calculate the average temperature
+    temperatura_media_por_intervalo = df.groupby('Intervalo_10')[AVERAGE_TEMP].mean().reset_index()
+
+    # The .mean() method calculates the mean temperature for each distance interval group
+     # .reset_index() resets the index of the DataFrame
+
+    fig = generate_bar_chart(temperatura_media_por_intervalo, element_x='Intervalo_10', elements_y=AVERAGE_TEMP, title='Temperatura Media de la Batería por Intervalo de Distancia')
+
+    fig.update_layout(
+        xaxis_title='Trayectos agrupados por intervalos de 10 km',
+        yaxis_title='Temperatura (°C)'
+    )
+
+    return fig
+
+def regen_vs_temp(df):
+    """
+    Regen (%) vs average temperature
+    Inputs:
+        df (pandas.DataFrame): The input DataFrame.
+        columns (list): A list of column names to include in the correlation calculation.
+
+    Outputs:
+        generate_scatter_plot()
+    """ 
+    AVERAGE_TEMP = 'Avg temp'
+    CITY = 'City energy'
+    SPORT = 'Sport energy'
+    FLOW = 'Flow energy'
+    CITY_REG = 'City regen'
+    SPORT_REG = 'Sport regen'
+
+    df[AVERAGE_TEMP] = df[AVERAGE_TEMP] / 100
+
+    df['Total energy'] = df[SPORT] + df[FLOW] + df[CITY]
+    df['Total regen'] =  df[SPORT_REG] + df[CITY_REG] 
+    df['Regen en (%)'] = (df['Total regen'] / df['Total energy']) * 100
+    
+    # 3. We want to show only the 95% of points below that percentile
+    column_filtered_above = df['Regen en (%)'].quantile(0.975)
+    column_filtered_below = df['Regen en (%)'].quantile(0.025)
+
+    # Modify the dataframe so the points that are going to be shown are those that are comprised
+    # between the 2.5% and 97.5% of the samples.
+    # Essentially, we're filetring a total of 5% of points that are furthest from the mean
+    df_filtered = df[(df['Regen en (%)'] <= column_filtered_above) & (df['Regen en (%)'] >= column_filtered_below)]
+    
+    df_filtered = df_filtered.copy()
+    df_filtered.loc[:, 'Interval'] = (df_filtered[AVERAGE_TEMP] // 0.01) * 0.01
+
+    df_regen = df_filtered.groupby('Interval')['Regen en (%)'].mean().reset_index()
+    # The .mean() method calculates the mean temperature for each distance interval group
+    # .reset_index() resets the index of the DataFrame
+
+    fig = generate_scatter_plot(df_regen,element_x='Interval' ,elements_y='Regen en (%)',title='Regeneracion de la bateria vs Temperatura',reg_line=True)
+
+    fig.update_layout(
+        xaxis_title='Temperatura (°C)',
+        yaxis_title='Regen (%)'
+    )
+
+    return fig

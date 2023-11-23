@@ -52,14 +52,14 @@
         "function": "generate_multi_histogram",
         "parameters": ["dataframe","title","elements","units"],
         "title": "Cell Temperatures",
-        "elements": ["Min battery temp", "Max battery temp"],
+        "elements": ["Min temp CT", "Max temp CT"],
         "units" : "ºC"
         
     },{ 
         "function": "generate_multi_histogram",
         "parameters": ["dataframe","title","elements","units"],
         "title": "Charging SoC",
-        "elements": ["SoC initial","SoC final"],
+        "elements": ["Start SoC","End SoC"],
         "units" : "%"
         
     },
@@ -87,45 +87,49 @@
         "function": "generate_pie_chart",
         "parameters": ["dataframe","title","elements"],
         "title": "Regeneración y Sail por Wh",
-        "elements": ["City Regen","Sport Regen"]
+        "elements": ["City regen","Sport regen"]
         
     },
     
     
     { 
         "function": "generate_scatter_plot_user",
-        "parameters": ["dataframe","title","column_x","columns_y","user","user_reg_line","reg_line"],
+        "parameters": ["dataframe","title","element_x","elements_y","key_user","user_reg_line","reg_line"],
         "title": "Comparación usuario: Tensiones de celda vs Odometro",
-        "element_x": ["End odometer"],
+        "element_x": "End odometer",
         "elements_y": ["Max cell V","Min cell V"],
         "key_user": "",
         "user_reg_line":"False",
         "reg_line": "True"
         
     },
-    
-    
-    { 
+    {
+        "function": "batery_temp_vs_distance",
+        "parameters": ["dataframe"]
+    },{ 
         "function": "get_consumption_vs_temp",
-        "parameters": ["df"]
+        "parameters": ["dataframe"]
         
     },{ 
         "function": "inv_min_t_vs_cell_min_t_vs_total_energy",
-        "parameters": ["df"]
+        "parameters": ["dataframe"]
         
     },{ 
         "function": "delta_soc_vs_inv_min_temp",
-        "parameters": ["df"]
+        "parameters": ["dataframe"]
         
     },{ 
         "function": "mode_energy_vs_kilometers",
-        "parameters": ["df"]
+        "parameters": ["dataframe"]
         
     },{ 
         "function": "delta_SoC_vs_Total_Energy",
-        "parameters": ["df"]
-        
-    }    
+        "parameters": ["dataframe"]   
+    },{ 
+        "function": "regen_vs_temp",
+        "parameters": ["dataframe"]   
+    }     
+
 ]
 
    
