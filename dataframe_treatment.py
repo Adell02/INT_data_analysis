@@ -160,7 +160,7 @@ def apply_resolution(df:pd.DataFrame):
 
     return df
 
-def df_filter_data(df:pd.DataFrame, type_name:str):
+def df_filter_data(df:pd.DataFrame, type_name:str, from_excel:bool=False):
     # This function has to be used before appending a dataframe to a definitive .parquet
     # file
     # 
@@ -183,23 +183,26 @@ def df_filter_data(df:pd.DataFrame, type_name:str):
     #   - Negative number stating the step that has given the error
 
     # Step 1
-    df = update_column_tags(df,type_name)
-    if df == -1:
-        return -1
-    
+    if from_excel:
+        df = update_column_tags(df,type_name)
+        if  not isinstance(df,pd.DataFrame):
+            return -1
+    else:
+        del df['Start odometer']
+
     # Step 2
     df = add_columns(df,type_name)
-    if df == -1:
+    if not isinstance(df,pd.DataFrame):
         return -2
     
     # Step 3
     df = sort_columns(df,type_name)
-    if df == -1:
+    if not isinstance(df,pd.DataFrame):        
         return -3
     
     # Step 4
     df = verify_values(df)
-    if df == -1:
+    if not isinstance(df,pd.DataFrame):
         return -4
     
     # Step 5 (it does not return any error if previous steps are ok)

@@ -12,20 +12,20 @@ import pyarrow.parquet as pq
 import datetime
 
 #Protocol Dictionary
-protocol_dict={"G1":["Timestamp", "Start", "End", "Start odometer", "Id"],
-                   "G2":["Timestamp", "End odometer", "Max speed", "Id"],
-                   "C2":["Timestamp", "City distance", "Sport distance","Flow distance","Sail distance","Regen distance","Id"],
-                   "C3":["Timestamp", "City energy", "Sport energy","Flow energy","City regen","Sport regen","Map changes","Id"],
-                   "IE":["Timestamp", "Inv max T", "Inv avg T", "Inv  min T","Motor max T","Motor avg T","Motor min T","Id"],
-                   "B1":["Timestamp", "Start SoC", "End SoC","Max discharge","Max regen","Id"],
-                   "B2":["Timestamp", "Avg current", "Thermal current","Max V","Id"],
-                   "B3":["Timestamp", "Average V", "Min V","Max cell V","Min cell V","Id"],
-                   "B4":["Timestamp", "Cell V diff", "Max temp","Avg temp","Min temp","Max delta","Avg delta","Id"],
-                   "H2":["Timestamp", "SoC i", "SoC f","Vmin I","Vavg I","Vmax I","Vmin F"],
-                   "H3":["Timestamp", "Avg final V", "Max final V","Max BMS current","Max charger current"], 
-                   "H4":["Timestamp", "Charger max P", "Min temp I","Avg temp I","Max temp I","Min temp F"],
-                   "H5":["Timestamp", "Avg temp F","Max temp F","Min temp CC","Max temp CC","Cycles","Age"],
-                   "H8":["Timestamp", "uSoC I", "uSoC F","Connector"]}
+protocol_dict={"G1":["Timestamp CT", "Start", "End", "Start odometer", "Id"],
+                   "G2":["Timestamp CT", "End odometer", "Max speed", "Id"],
+                   "C2":["Timestamp CT", "City distance", "Sport distance","Flow distance","Sail distance","Regen distance","Id"],
+                   "C3":["Timestamp CT", "City energy", "Sport energy","Flow energy","City regen","Sport regen","Map changes","Id"],
+                   "IE":["Timestamp CT", "Inv max T", "Inv avg T", "Inv min T","Motor max T","Motor avg T","Motor min T","Id"],
+                   "B1":["Timestamp CT", "Start SoC", "End SoC","Max discharge","Max regen","Id"],
+                   "B2":["Timestamp CT", "Avg current", "Thermal current","Max V","Id"],
+                   "B3":["Timestamp CT", "Average V", "Min V","Max cell V","Min cell V","Id"],
+                   "B4":["Timestamp CT", "Cell V diff", "Max temp CT","Avg temp","Min temp CT","Max delta","Avg delta","Id"],
+                   "H2":["Timestamp CC", "SoC i", "SoC f","Vmin I","Vavg I","Vmax I","Vmin F"],
+                   "H3":["Timestamp CC", "Avg final V", "Max final V","Max BMS current","Max charger current"], 
+                   "H4":["Timestamp CC", "Charger max P", "Min temp I","Avg temp I","Max temp I","Min temp F"],
+                   "H5":["Timestamp CC", "Avg temp F","Max temp F","Min temp CC","Max temp CC","Cycles","Age"],
+                   "H8":["Timestamp CC", "uSoC I", "uSoC F","Connector"]}
 #En el H5-->"H5":["Timestamp", "ID", "Avg temp F","Max temp F","Min temp CC","Max temp CC","Cycles","Age"] el ID apareix al protocol pero no a 
 #la seva descripcio ni tampoc apareix en el excel. DE MOMENT NO EL POSO
 
@@ -742,8 +742,10 @@ def df_create(string:str, param_order)->pd.DataFrame:
     payload = components[1]
 
     # Check if the "End of Message Character" is present and remove it
-    if payload.endswith("#&"):
-        payload = payload[:-2]
+    if payload.endswith(",#&"):
+        payload = payload[:-3]
+    # Eliminar espacios en blanco adicionales al final del payload
+    payload = payload.strip()
 
     # Split the payload into its parts
     payload_parts = payload.split(',')
@@ -751,7 +753,7 @@ def df_create(string:str, param_order)->pd.DataFrame:
 
     # Convert the values to integers or leave as None if they can't be converted
     for part in payload_parts:
-        if part.isdigit():
+        if part.isdigit() or (part[0] == '-' and part[1:].isdigit()):
             param_values.append(int(part))
         else:
             param_values.append(None)
@@ -830,19 +832,19 @@ def check_type(string:str)-> str:
 def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
 
 
-    all_columns_trip = ['Timestamp','Id','Start','End','Start odometer','End odometer','Max speed','City distance','Sport distance','Flow distance','Sail distance','Regen distance','City energy', 
-                   'Sport energy','Flow energy','City regen','Sport regen','Map changes','Inv max T', 'Inv avg T', 'Inv  min T','Motor max T','Motor avg T','Motor min T',
+    all_columns_trip = ['Timestamp CT','Id','Start','End','Start odometer','End odometer','Max speed','City distance','Sport distance','Flow distance','Sail distance','Regen distance','City energy', 
+                   'Sport energy','Flow energy','City regen','Sport regen','Map changes','Inv max T', 'Inv avg T', 'Inv min T','Motor max T','Motor avg T','Motor min T',
                    'Start SoC', 'End SoC','Max discharge','Max regen','Avg current', 'Thermal current','Max V','Average V', 'Min V','Max cell V','Min cell V',
-                   'Cell V diff', 'Max temp','Avg temp','Min temp','Max delta','Avg delta']
+                   'Cell V diff', 'Max temp CT','Avg temp','Min temp CT','Max delta','Avg delta']
 
-    all_columns_charge = ['Timestamp', 'SoC i', 'SoC f','Vmin I','Vavg I','Vmax I','Vmin F','Avg final V', 'Max final V','Max BMS current','Max charger current',
+    all_columns_charge = ['Timestamp CC', 'SoC i', 'SoC f','Vmin I','Vavg I','Vmax I','Vmin F','Avg final V', 'Max final V','Max BMS current','Max charger current',
                         'Charger max P', 'Min temp I','Avg temp I','Max temp I','Min temp F', 'Avg temp F','Max temp F','Min temp CC','Max temp CC','Cycles','Age','uSoC I',
                         'uSoC F','Connector']
 
     if type_name == 'trip':
 
         for df in dataframes:
-            timestamp_column_name = 'Timestamp'
+            timestamp_column_name = 'Timestamp CT'
             id_column_name = 'Id'
             
             timestamp = df[timestamp_column_name].iloc[0]
@@ -877,7 +879,7 @@ def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
 
     elif type_name == 'charge':
         for df in dataframes:
-            timestamp_column_name = 'Timestamp'
+            timestamp_column_name = 'Timestamp CC'
             
             timestamp = df[timestamp_column_name].iloc[0]
 
@@ -1218,5 +1220,5 @@ def df_update_column_tags(df:pd.DataFrame,type_name:str) -> pd.DataFrame:
 
     # Generate the new file
     table = pa.Table.from_pandas(df)
-    pq.write_table(table,file_path)
+    #pq.write_table(table,file_path)
     return 0
