@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import xlsxwriter
 import openpyxl
+from functions import *
 
 
 
@@ -67,5 +68,7 @@ with pd.ExcelWriter('Ray_Data_Base.xlsx', engine='openpyxl') as writer:
     df_final_t.to_excel(writer, sheet_name='CT', index=True)
     df_final_c.to_excel(writer, sheet_name='CC', index=True)
  
+df_append_data(df_final_t, 'trip')
+df_append_data(df_final_c, 'charge')
 
 
