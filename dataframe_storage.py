@@ -5,6 +5,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from datetime import datetime, timedelta
 import datetime
+import calendar
 
 
 
@@ -212,7 +213,7 @@ def df_append_data(df_new:pd.DataFrame, type_name:str) -> int:
     month_min=date_min.month
 
     date_start = datetime.datetime(year_min, month_min, 1) 
-    date_end = datetime.datetime(year_max, month_max, 31)  
+    date_end = datetime.datetime(year_max, month_max, calendar.monthrange(year_max,month_max)[1])  
 
     # Iterate through all months
     current_date = date_start
