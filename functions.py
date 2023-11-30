@@ -1,15 +1,5 @@
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import numpy as np
-import statsmodels.api as sm
 import os
-import json
-from scipy import interpolate
-import pyarrow as pa
-import pyarrow.parquet as pq
-import datetime
 
 #Protocol Dictionary
 protocol_dict={"G1":["Timestamp CT", "Start", "End", "Start odometer", "Id"],
@@ -644,7 +634,7 @@ def df_from_parquet_vehicle(file_path:str, rack_number:int) -> pd.DataFrame:
 
 def df_get_elements_tag(dataframe:pd.DataFrame):
     # This vector returns a vector containing all names of all columns and the name
-    # of the index in case there is one given a dataframe dataframe
+    # of the index in case there is one given a dataframe
     # 
     # INPUTS
     #   - dataframe:    dataframe to read
@@ -664,77 +654,9 @@ def df_get_elements_tag(dataframe:pd.DataFrame):
         index = None
     
     else:
-        index = dataframe.index.name
+        index = dataframe.index.unique()
 
     return index, tags_vector
-'''
-def df_check_user_values(usr_dataframe):
-
-    # Load the JSON file
-    #INPUT
-    #usr_dataframe: Un DataFrame de pandas que contiene los datos que se van a verificar. Los nombres de las columnas del DataFrame representan los elementos cuyos valores se verificarán.
-    #   
-    #OUTPUTS
-    #   - result:Devuelve True si todos los valores están dentro de los rangos, y False si al menos un valor está fuera de los rangos o si hay elementos no encontrados en el archivo JSON.
-    #elements_check: Un diccionario que contiene información detallada sobre la verificación de cada elemento. Para cada elemento, se almacenan los resultados de la verificación mínima (Check_min), la verificación máxima (Check_max).Este diccionario proporciona detalles sobre qué valores no cumplen con los criterios de verificación.
-    
-    with open('param_batery.json', 'r') as file:
-        dict_param = json.load(file)
-
-    result = True
-    elements_check = {}
-
-    for element in usr_dataframe.columns:
-        min_value = dict_param[element]['Value_MIN']
-        max_value = dict_param[element]['Value_MAX']
-        
-        check_min = True  # Initialize the verification variables
-        check_max = True
-
-        for value in usr_dataframe[element]:
-            if value < min_value or value > max_value:
-                check_min = False
-                check_max = False
-
-        elements_check[element] = {
-            'Check_min': check_min,
-            'Check_max': check_max,
-            'Check': check_min or check_max
-        }
-
-        if not elements_check[element]['Check']:
-            result = False
-
-    return result, elements_check
-'''
-
-def load_parameters_from_json():
-    # Leer el archivo JSON con los valores máximos y mínimos
-    with open('param_battery.json', 'r') as json_file:
-        data = json.load(json_file)
-    return data["parameters"]
-
-def df_verify_values_in_range(file_path):
-   
-    if not os.path.exists(file_path):
-        return -1
-    
-    dataframe = pd.read_parquet(file_path)
-    
-    parametrs = load_parameters_from_json()
-    for column in dataframe.columns:
-        value_max = parametrs.get(column, {}).get("Value_MAX") #Si el campo no se encuentra, get() devuelve un diccionario vacío ({})
-        value_min = parametrs.get(column, {}).get("Value_MIN")
-
-        condicion = (dataframe[column] >= value_min) & (dataframe[column] <= value_max)
-        dataframe = dataframe.loc[condicion]
-        if dataframe.empty:
-            print("empty")
-    # Generate the new file
-    table = pa.Table.from_pandas(dataframe)
-    pq.write_table(table,file_path)
-    
-    return dataframe
 
 def df_create(string:str, param_order)->pd.DataFrame:
     # Split the string into its components

@@ -55,7 +55,7 @@ def df_create(string:str, param_order)->pd.DataFrame:
 
     return df
 
-def df_from_string_to_df(vin:str,string:str)-> (pd.DataFrame,str):
+def df_from_string_to_df(string:str)-> (pd.DataFrame,str):
 
     components = string.split(':')
     message_type = components[0][1:]
@@ -221,7 +221,8 @@ def from_server_to_parquet(df_server:pd.DataFrame):
         # if else.
         if isinstance(df_created,pd.DataFrame):
             df_filtered=df_filter_data(df_created,type_name)
-            df_appended=df_append_data(df_filtered,type_name)
+            if isinstance(df_filtered,pd.DataFrame):
+                df_appended=df_append_data(df_filtered,type_name)
 
             return df_appended
     

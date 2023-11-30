@@ -6,7 +6,7 @@ import numpy as np
 import statsmodels.api as sm
 import os
 
-from functions import *
+from plots_generation import *
 
 """
 Consumo vs temperatura.
@@ -95,9 +95,7 @@ def get_consumption_vs_temp(df):
     
     # 4. Get a scatter plot
     fig_filtered = generate_scatter_plot(df_filtered,TEMP_COLUMN,CONSUMPTION_COLUMN,'Consumption vs Temp Filtered',True)
-    fig_filtered.update_layout(scene=dict(
-        xaxis = dict(range=[min(df[TEMP_COLUMN]),max(df[TEMP_COLUMN])])
-    ))
+
     # 5. Get the correlation between variables
 
     """
@@ -124,7 +122,10 @@ def get_consumption_vs_temp(df):
         y=0.99,
         xanchor="right",
         x=0.99
-))
+    ),
+    scene=dict(
+        xaxis = dict(range=[min(df[TEMP_COLUMN]),max(df[TEMP_COLUMN])])
+    ))
     
     return fig_filtered
 
