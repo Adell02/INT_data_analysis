@@ -1,15 +1,6 @@
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import numpy as np
-import statsmodels.api as sm
-import os
-import json
-from scipy import interpolate
-import pyarrow as pa
-import pyarrow.parquet as pq
-import datetime
+from dataframe_storage import df_append_data
+from dataframe_treatment import df_filter_data
 
 
 #Protocol Dictionary
@@ -30,6 +21,9 @@ protocol_dict={"G1":["Timestamp CT", "Start", "End", "Start odometer", "Id"],
 
 df_dict_trip = {}
 df_dict_charge = {}
+
+VIN_COLUMN = 'DeviceId'
+DATA_COLUMN = 'OriginalMessage'
 
 def df_create(string:str, param_order)->pd.DataFrame:
     # Split the string into its components
@@ -61,7 +55,7 @@ def df_create(string:str, param_order)->pd.DataFrame:
 
     return df
 
-def df_from_string_to_df(string:str)-> (pd.DataFrame,str):
+def df_from_string_to_df(vin:str,string:str)-> (pd.DataFrame,str):
 
     components = string.split(':')
     message_type = components[0][1:]
@@ -124,7 +118,6 @@ def check_type(string:str)-> str:
     return -1
 
 def create_df_dict(VIN:str,dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
-
 
     all_columns_trip = ['Timestamp CT','Id','Start','End','Start odometer','End odometer','Max speed','City distance','Sport distance','Flow distance','Sail distance','Regen distance','City energy', 
                    'Sport energy','Flow energy','City regen','Sport regen','Map changes','Inv max T', 'Inv avg T', 'Inv min T','Motor max T','Motor avg T','Motor min T',
@@ -206,3 +199,30 @@ def create_df_dict(VIN:str,dataframes:pd.DataFrame, type_name:str)->pd.DataFrame
 
 
     return -1
+
+
+def from_server_to_parquet(df_server:pd.DataFrame):
+# This function will append to the existing parquet, given a dataframe fetched from Ray's
+# server. This function will also filter and append the given data.
+# 
+# INPUT
+# - df_server: containing two columns: DeviceId, and OriginalMessage, containing one packet info
+# 
+# OUTPUT
+# - df_appended if any row has been completed, otherwise returns None
+
+    df_server = df_server.sort_values(by=VIN_COLUMN, ascending=True)
+
+    for unused,row in df_server.iterrows():
+        df_packet,type_name=df_from_string_to_df(row[DATA_COLUMN])
+        df_created = create_df_dict(row[VIN_COLUMN],[df_packet],type_name)
+        
+        # The returned value can be a dataframe if it has been completed or a dictionary
+        # if else.
+        if isinstance(df_created,pd.DataFrame):
+            df_filtered=df_filter_data(df_created,type_name)
+            df_appended=df_append_data(df_filtered,type_name)
+
+            return df_appended
+    
+    return
