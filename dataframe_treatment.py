@@ -131,9 +131,6 @@ def verify_values(df:pd.DataFrame):
 
         condicion = (df[column] >= value_min) & (df[column] <= value_max)
         df = df.loc[condicion]
-        
-        if df.empty:
-            return -1
     
     return df
 
@@ -202,7 +199,7 @@ def df_filter_data(df:pd.DataFrame, type_name:str, from_excel:bool=False):
     
     # Step 4
     df = verify_values(df)
-    if not isinstance(df,pd.DataFrame):
+    if df.empty:
         return -4
     
     # Step 5 (it does not return any error if previous steps are ok)

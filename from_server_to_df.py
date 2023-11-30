@@ -123,7 +123,7 @@ def check_type(string:str)-> str:
 
     return -1
 
-def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
+def create_df_dict(VIN:str,dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
 
 
     all_columns_trip = ['Timestamp CT','Id','Start','End','Start odometer','End odometer','Max speed','City distance','Sport distance','Flow distance','Sail distance','Regen distance','City energy', 
@@ -155,7 +155,8 @@ def create_df_dict(dataframes:pd.DataFrame, type_name:str)->pd.DataFrame:
                 if all(existing_df.notnull().all()):
                     # Retornar el DataFrame y eliminarlo del diccionario
                     del df_dict_trip[(timestamp, identifier)]
-                    
+                    existing_df['VIN']=VIN
+                    existing_df.set_index('VIN',inplace=True)
                     return existing_df
             else:
                 # Si no existe, crear una nueva entrada con el DataFrame vacío y luego asignar los datos
