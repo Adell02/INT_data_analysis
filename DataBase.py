@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from functions import *
+from dataframe_treatment import *
 
 
 def df_from_scratch() -> tuple[pd.DataFrame,pd.DataFrame]:
@@ -69,3 +70,18 @@ def df_from_scratch() -> tuple[pd.DataFrame,pd.DataFrame]:
         df_final_c.to_excel(writer, sheet_name='CC', index=True)
 
     return df_final_t,df_final_c
+
+def df_generate_excel(df_trip,df_charge)-> tuple[pd.DataFrame,pd.DataFrame]:
+    
+    df_t=df_filter_data(df_trip,'trip',True)
+    df_c=df_filter_data(df_charge,'charge',True)
+
+    if os.path.exists('Ray_Data_Base_Filter.xlsx'):
+            os.remove('Ray_Data_Base_Filter.xlsx')
+
+    with pd.ExcelWriter('Ray_Data_Base_Filter.xlsx', engine='openpyxl') as writer:
+            #writer.book = openpyxl.Workbook()
+            df_t.to_excel(writer, sheet_name='CT', index=True)
+            df_c.to_excel(writer, sheet_name='CC', index=True)
+    
+    return df_t,df_c
