@@ -43,7 +43,7 @@
     },
     "Max speed": {
       "Type Chart Variables": "trip",
-      "Value_MAX": 2300,
+      "Value_MAX": 160,
       "Value_MIN": 0,
       "Units": "Km/h",
       "Resolution": 0.0625
