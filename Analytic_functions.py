@@ -1,4 +1,17 @@
-from plots_generation import*
+from functions import *
+from plots_generation import *
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import numpy as np
+import statsmodels.api as sm
+import os
+import json
+import numpy as np
+from scipy.interpolate import griddata
+
+TEXT_OFFSET = 500
 
 def delta_SoC_vs_Total_Energy(df_trip):
     '''
@@ -6,10 +19,25 @@ def delta_SoC_vs_Total_Energy(df_trip):
         Input: df_trip (DataFrame)
         Output: fig (plotly.graph_objects.Figure)
     '''
-    DIF_SOC = '∂SoC'
+    TITLE = 'Differential SoC vs Total energy'
     TOTAL_ENERGY = 'Total energy'
     DELTA_SOC = 'SoC delta'
-    fig = generate_scatter_plot(df_trip,TOTAL_ENERGY,DELTA_SOC,title= DIF_SOC, reg_line=True)
+    fig = generate_scatter_plot(df_trip,TOTAL_ENERGY,DELTA_SOC,title= TITLE, reg_line=True)
+    # Get correlation using filtered points
+    correlation = df_trip[DELTA_SOC].corr(df_trip[TOTAL_ENERGY])
+    # Get the position of the top-right corner to display the text in that point
+    x_position_filtered = min(df_trip[TOTAL_ENERGY])+TEXT_OFFSET
+    y_position_filtered = max(df_trip[DELTA_SOC])
+    # Generate text to display the correlation and place it in the legend
+    fig_text = f'r: {round(correlation*100,2)}%'
+    fig.add_trace(go.Scatter(x=[x_position_filtered], y=[y_position_filtered], mode="text",name = fig_text ,showlegend=True))
+    fig.update_traces(marker=dict(size=3))
+    fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99
+))
     return fig
 
 
@@ -26,10 +54,11 @@ def mode_energy_vs_kilometers(df_trip):
     DISTANCE_CITY = 'City distance'
     DISTANCE_SPORT = 'Sport distance' 
     DISTANCE_FLOW = 'Flow distance'
-    DIF_SPORT_MODE = 'Differential Sport energy (Wh/km)'
-    DIF_CITY_MODE = 'Differential city energy (Wh/km)'
-    DIF_FLOW_MODE = 'Differential flow energy (Wh/km)'
-    TITLE = 'Mode_energy_vs_kilometers (Wh/km)'
+    
+    DIF_SPORT_MODE = 'Sport (Wh/km)'
+    DIF_CITY_MODE = 'City (Wh/km)'
+    DIF_FLOW_MODE = 'Flow (Wh/km)'
+    TITLE = 'Differential Mode Energy vs Kilometers'
     ELEMENTS_Y = [DIF_CITY_MODE,DIF_SPORT_MODE,DIF_FLOW_MODE]
 
     df_final = pd.DataFrame()
@@ -37,6 +66,12 @@ def mode_energy_vs_kilometers(df_trip):
     df_final[DIF_CITY_MODE]= df_trip[CITY_MODE]/df_trip[DISTANCE_CITY]
     df_final[DIF_FLOW_MODE]= df_trip[FLOW_MODE]/df_trip[DISTANCE_FLOW]
     fig = generate_box_plot(df_final,ELEMENTS_Y,title = TITLE)
+    fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99
+))
     return fig
 
 
@@ -64,12 +99,13 @@ def delta_soc_vs_inv_min_temp(df_trip):
     """
     INV_MIN_T = 'Inv min T'
     DELTA_SOC = 'SoC delta'
-    TITLE = '∂SoC'
-    SOC_VS_TEMP = 'Soc Delta vs Inv min T(%/°C)'
-    CONSUMPTION_COLUMN = 'Consumption SoC(%)/km'
+    TITLE = 'Consumption VS Inversor minimum Temperature'
+    SOC_VS_TEMP = 'Diferential Soc vs Inv min T(%/°C)'
+    CONSUMPTION_COLUMN = 'Consumption ∂SoC(%)/km'
     DISTANCE_COLUMN = 'Total distance'
+    
     df_final = pd.DataFrame()
-    df_final[CONSUMPTION_COLUMN] = df_trip[DELTA_SOC] / df_trip[DISTANCE_COLUMN]
+    df_final[CONSUMPTION_COLUMN] = df_trip[DELTA_SOC]/df_trip[DISTANCE_COLUMN]
     df_final[INV_MIN_T] = df_trip[INV_MIN_T]
 
     # Check for missing data
@@ -86,6 +122,12 @@ def delta_soc_vs_inv_min_temp(df_trip):
 
     try:
         fig = generate_scatter_plot(media_por_rango, INV_MIN_T, CONSUMPTION_COLUMN, title=TITLE, reg_line=True)
+        fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99
+))
         return fig
     except Exception as e:
         print(f"Error generating graph! Mistake: {e}")
@@ -103,7 +145,16 @@ def inv_min_t_vs_cell_min_t_vs_total_energy(df_trip):
     INV_MIN_T = 'Inv min T'
     TOTAL_ENERGY = 'Total energy'
     CELL_MIN_T = 'Min temp CT'
-    return generate_response_surface(df_trip, INV_MIN_T, CELL_MIN_T, TOTAL_ENERGY, title='Temperature Response Surface')
+    
+
+    fig=generate_response_surface(df_trip, INV_MIN_T, CELL_MIN_T, TOTAL_ENERGY, title='Cell Temperature Response Surface')
+    fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99
+))
+    return fig
 #Para entregar
 def correlation(df, columns):
     """
@@ -146,11 +197,11 @@ def batery_temp_vs_distance(df):
     # The .mean() method calculates the mean temperature for each distance interval group
      # .reset_index() resets the index of the DataFrame
 
-    fig = generate_bar_chart(temperatura_media_por_intervalo, element_x='Intervalo_10', elements_y=AVERAGE_TEMP, title='Temperatura Media de la Batería por Intervalo de Distancia')
+    fig = generate_bar_chart(temperatura_media_por_intervalo, element_x='Intervalo_10', elements_y=AVERAGE_TEMP, title='Average Battery Temperature by Distance Interval')
 
     fig.update_layout(
-        xaxis_title='Trayectos agrupados por intervalos de 10 km',
-        yaxis_title='Temperatura (°C)'
+        xaxis_title='Trips grouped by intervals of 10 km',
+        yaxis_title='Temperature (°C)'
     )
 
     return fig
@@ -165,40 +216,44 @@ def regen_vs_temp(df):
     Outputs:
         generate_scatter_plot()
     """ 
-    AVERAGE_TEMP = 'Avg temp'
+    AVERAGE_TEMP = 'Inv avg T'
     CITY = 'City energy'
     SPORT = 'Sport energy'
     FLOW = 'Flow energy'
     CITY_REG = 'City regen'
     SPORT_REG = 'Sport regen'
 
-    df[AVERAGE_TEMP] = df[AVERAGE_TEMP] / 100
-
     df['Total energy'] = df[SPORT] + df[FLOW] + df[CITY]
     df['Total regen'] =  df[SPORT_REG] + df[CITY_REG] 
-    df['Regen en (%)'] = (df['Total regen'] / df['Total energy']) * 100
+    df['Regeneration (%)'] = (df['Total regen'] / df['Total energy']) * 100
     
     # 3. We want to show only the 95% of points below that percentile
-    column_filtered_above = df['Regen en (%)'].quantile(0.975)
-    column_filtered_below = df['Regen en (%)'].quantile(0.025)
+    column_filtered_above = df['Regeneration (%)'].quantile(0.975)
+    column_filtered_below = df['Regeneration (%)'].quantile(0.025)
 
     # Modify the dataframe so the points that are going to be shown are those that are comprised
     # between the 2.5% and 97.5% of the samples.
     # Essentially, we're filetring a total of 5% of points that are furthest from the mean
-    df_filtered = df[(df['Regen en (%)'] <= column_filtered_above) & (df['Regen en (%)'] >= column_filtered_below)]
+    df_filtered = df[(df['Regeneration (%)'] <= column_filtered_above) & (df['Regeneration (%)'] >= column_filtered_below)]
     
     df_filtered = df_filtered.copy()
-    df_filtered.loc[:, 'Interval'] = (df_filtered[AVERAGE_TEMP] // 0.01) * 0.01
+    df_filtered['Interval'] = df_filtered[AVERAGE_TEMP]
 
-    df_regen = df_filtered.groupby('Interval')['Regen en (%)'].mean().reset_index()
+    df_regen = df_filtered.groupby('Interval')['Regeneration (%)'].mean().reset_index()
     # The .mean() method calculates the mean temperature for each distance interval group
     # .reset_index() resets the index of the DataFrame
 
-    fig = generate_scatter_plot(df_regen,element_x='Interval' ,elements_y='Regen en (%)',title='Regeneracion de la bateria vs Temperatura',reg_line=True)
+    fig = generate_scatter_plot(df_regen,element_x='Interval' ,elements_y='Regeneration (%)',title='Regeneration of Battery vs Inversor Temperature',reg_line=True)
 
     fig.update_layout(
-        xaxis_title='Temperatura (°C)',
-        yaxis_title='Regen (%)'
+        xaxis_title='Inversor Average Temperature(°C)',
+        yaxis_title='Regeneration (%)'
     )
+    fig.update_layout(legend=dict(
+        yanchor="top",
+        y=0.99,
+        xanchor="right",
+        x=0.99
+))
 
     return fig
