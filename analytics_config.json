@@ -68,25 +68,25 @@
     { 
         "function": "generate_pie_chart",
         "parameters": ["dataframe","title","elements"],
-        "title": "Modos de Conducción por km",
+        "title": "Driving Modes per kilometers",
         "elements": ["City distance","Sport distance","Flow distance"]
         
     },{ 
         "function": "generate_pie_chart",
         "parameters": ["dataframe","title","elements"],
-        "title": "Regeneración y Sail por km",
+        "title": "Regeneration and Sail per kilometers",
         "elements": ["Sail distance","Regen distance"]
         
     },{ 
         "function": "generate_pie_chart",
         "parameters": ["dataframe","title","elements"],
-        "title": "Modos de Conducción por Wh",
+        "title": "Driving Modes per Wh",
         "elements": ["City energy","Sport energy","Flow energy"]
         
     },{ 
         "function": "generate_pie_chart",
         "parameters": ["dataframe","title","elements"],
-        "title": "Regeneración y Sail por Wh",
+        "title": "Regeneration and Sail per Wh",
         "elements": ["City regen","Sport regen"]
         
     },
@@ -95,7 +95,7 @@
     { 
         "function": "generate_scatter_plot_user",
         "parameters": ["dataframe","title","element_x","elements_y","key_user","user_reg_line","reg_line"],
-        "title": "Comparación usuario: Tensiones de celda vs Odometro",
+        "title": "User comparison: Cell voltages vs Odometer",
         "element_x": "End odometer",
         "elements_y": ["Max cell V","Min cell V"],
         "key_user": "",
